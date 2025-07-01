@@ -3,11 +3,14 @@ import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.LinkedList;
+import java.util.Arrays;
 
 public class HtmlData
 {
 	private static final String class_name="HtmlData"; 
 	private static final Logger log = Logger.getLogger(class_name);
+
+	public static double font_width_multiplier=0.45;
 
 	public HtmlData parent=null;
 
@@ -50,20 +53,19 @@ public class HtmlData
 	public String border_bottom_color="";
 	public String border_left_color="";
 
-	public String margins="";
+	public String[] margins=new String[0];
 	public String margin_top="0";
 	public String margin_right="0";
 	public String margin_bottom="0";
 	public String margin_left="0";
 
-	public String paddings="";
+	public String[] paddings=new String[0];
 	public String padding_top="0";
 	public String padding_right="0";
 	public String padding_bottom="0";
 	public String padding_left="0";
 
-	public int font_size=12;
-	public double char_width=0.5*font_size;
+	public double font_size=12.0;
 	public String font_family = "Times-Roman";
 
 	public String background_color="white";
@@ -129,8 +131,8 @@ public class HtmlData
 		//copyParentStyleProperties();
 		extractStyleString();
 		extractStyleProperties();
-		System.out.println("\n"+class_name+".setParent(): matched_sequence: "+this.matched_sequence);//debug**
-		System.out.println(" "+this.printStyling());//debug**
+		//System.out.println("\n"+class_name+".setParent(): matched_sequence: "+this.matched_sequence);//debug**
+		//System.out.println(" "+this.printStyling());//debug**
 	}//setParent().
 
 	public String getTag()
@@ -186,7 +188,6 @@ public class HtmlData
 		this.padding_left = parent.padding_left;
 
 		this.font_size = parent.font_size;
-		this.char_width=(int)(0.5*this.font_size);
 		this.font_family = parent.font_family;
 	}//copyParentStyleProperties() */
 
@@ -449,24 +450,57 @@ public class HtmlData
 
 	private void extractMargins()
 	{
-		this.margins = extractStyleDimension("margin", "0", parent.margins, "none");
+		//System.out.println("\nextractMargins(): matched_sequence:"+this.matched_sequence);//debug**
+
+		//this.margins = extractStyleDimension("margin", "0", parent.margins, "none");
+		String style_all_margins="";
+		try
+		{style_all_margins = HtmlToPdfConverter.findLastMatch(this.style_string, "margin *:[^;\"]+").replaceAll("margin *:","").trim();}
+		catch(CustomException ce)
+		{
+			ce.setCodeDescription("Trying to get 'margin'");
+			ce.writeLog(log);
+		}//catch().
+		if(style_all_margins.length()>0)
+		{
+			//System.out.println(" style_all_margins: "+style_all_margins);//debug**
+			if(style_all_margins.equals("none"))
+			{this.margins=new String[]{"0","0","0","0"};}
+			else
+			{
+				String[] all_margins = style_all_margins.split(" ");
+				if(all_margins.length==1)
+				{
+					String global_margin = numbersAndPercent(all_margins[0]);
+					this.margins=new String[]{global_margin, global_margin, global_margin, global_margin};
+				}//if.
+				else if(all_margins.length==2)
+				{
+					String top_bottom = numbersAndPercent(all_margins[0]);
+					String left_right = numbersAndPercent(all_margins[1]);
+					this.margins=new String[]{top_bottom, left_right, top_bottom, left_right};
+				}//else if.
+				else if(all_margins.length==4)
+				{this.margins=new String[]{numbersAndPercent(all_margins[0]),numbersAndPercent(all_margins[1]),numbersAndPercent(all_margins[2]),numbersAndPercent(all_margins[3])};}
+			}//else.
+		}//if.
+		//System.out.println(" this.margins: "+Arrays.toString(this.margins));//debug**
+
 		String top_margin = extractStyleDimension("margin-top", "0", String.valueOf(parent.margin_top), "none");
 		String right_margin = extractStyleDimension("margin-right", "0", String.valueOf(parent.margin_right), "none");
 		String bottom_margin = extractStyleDimension("margin-bottom", "0", String.valueOf(parent.margin_bottom), "none");
 		String left_margin = extractStyleDimension("margin-left", "0", String.valueOf(parent.margin_left), "none");
 
-		if(!this.margins.equals("0"))//'0' means no value was found when looking for 'margin:'. 'none' means 'margin:' was explicitly set to 'none' or '0'.
+		if(this.margins.length>0)//'0' means no value was found when looking for 'margin:'. 'none' means 'margin:' was explicitly set to 'none' or '0'.
 		{
-			this.margins=this.margins.replaceAll("none","0");
-
 			if(top_margin.equals("0"))
-			{top_margin = this.margins;}
+			{top_margin = this.margins[0];}
 			if(right_margin.equals("0"))
-			{right_margin = this.margins;}
+			{right_margin = this.margins[1];}
 			if(bottom_margin.equals("0"))
-			{bottom_margin = this.margins;}
+			{bottom_margin = this.margins[2];}
 			if(left_margin.equals("0"))
-			{left_margin = this.margins;}
+			{left_margin = this.margins[3];}
 		}//if.
 
 		this.margin_top = top_margin.replaceAll("none","0");
@@ -477,24 +511,57 @@ public class HtmlData
 
 	private void extractPadding()
 	{
-		this.paddings = extractStyleDimension("padding", "0", parent.paddings ,"none");
+		//System.out.println("\nextractPaddings(): matched_sequence:"+this.matched_sequence);//debug**
+
+		//this.paddings = extractStyleDimension("padding", "0", parent.paddings, "none");
+		String style_all_paddings="";
+		try
+		{style_all_paddings = HtmlToPdfConverter.findLastMatch(this.style_string, "padding *:[^;\"]+").replaceAll("padding *:","").trim();}
+		catch(CustomException ce)
+		{
+			ce.setCodeDescription("Trying to get 'padding'");
+			ce.writeLog(log);
+		}//catch().
+		if(style_all_paddings.length()>0)
+		{
+			//System.out.println(" style_all_paddings: "+style_all_paddings);//debug**
+			if(style_all_paddings.equals("none"))
+			{this.paddings=new String[]{"0","0","0","0"};}
+			else
+			{
+				String[] all_paddings = style_all_paddings.split(" ");
+				if(all_paddings.length==1)
+				{
+					String global_padding = numbersAndPercent(all_paddings[0]);
+					this.paddings=new String[]{global_padding, global_padding, global_padding, global_padding};
+				}//if.
+				else if(all_paddings.length==2)
+				{
+					String top_bottom = numbersAndPercent(all_paddings[0]);
+					String left_right = numbersAndPercent(all_paddings[1]);
+					this.paddings=new String[]{top_bottom, left_right, top_bottom, left_right};
+				}//else if.
+				else if(all_paddings.length==4)
+				{this.paddings=new String[]{numbersAndPercent(all_paddings[0]),numbersAndPercent(all_paddings[1]),numbersAndPercent(all_paddings[2]),numbersAndPercent(all_paddings[3])};}
+			}//else.
+		}//if.
+		//System.out.println(" this.paddings: "+Arrays.toString(this.paddings));//debug**
+
 		String top_padding = extractStyleDimension("padding-top", "0", String.valueOf(parent.padding_top), "none");
 		String right_padding = extractStyleDimension("padding-right", "0", String.valueOf(parent.padding_right), "none");
 		String bottom_padding = extractStyleDimension("padding-bottom", "0", String.valueOf(parent.padding_bottom), "none");
 		String left_padding = extractStyleDimension("padding-left", "0", String.valueOf(parent.padding_left), "none");
 
-		if(!this.paddings.equals("0"))//'0' means no value was found when looking for 'padding:'. 'none' means 'padding:' was explicitly set to 'none' or '0'.
+		if(this.paddings.length>0)//'0' means no value was found when looking for 'padding:'. 'none' means 'padding:' was explicitly set to 'none' or '0'.
 		{
-			this.paddings.replaceAll("none","0");
-
 			if(top_padding.equals("0"))
-			{top_padding = this.paddings;}
+			{top_padding = this.paddings[0];}
 			if(right_padding.equals("0"))
-			{right_padding = this.paddings;}
+			{right_padding = this.paddings[1];}
 			if(bottom_padding.equals("0"))
-			{bottom_padding = this.paddings;}
+			{bottom_padding = this.paddings[2];}
 			if(left_padding.equals("0"))
-			{left_padding = this.paddings;}
+			{left_padding = this.paddings[3];}
 		}//if.
 
 		this.padding_top = top_padding.replaceAll("none","0");
@@ -508,8 +575,8 @@ public class HtmlData
 		String font_size_str="";
 		try
 		{
-			font_size_str = HtmlToPdfConverter.findLastMatchWithDefaultValue(this.style_string, "font-size *: *[0-9]+", String.valueOf(parent.font_size));
-			this.font_size=Integer.parseInt(font_size_str.replaceAll("[^0-9]+",""));
+			font_size_str = HtmlToPdfConverter.findLastMatchWithDefaultValue(this.style_string, "font-size *: *[0-9.]+", String.valueOf(parent.font_size));
+			this.font_size=Double.parseDouble(font_size_str.replaceAll("[^0-9.]+",""));
 		}//try.
 		catch(CustomException ce)
 		{
@@ -522,9 +589,6 @@ public class HtmlData
 			this.font_size=parent.font_size;
 		}//catch().
 
-		this.char_width=(int)(0.5*this.font_size);
-
-
 		try
 		{this.font_family = HtmlToPdfConverter.findLastMatchWithDefaultValue(this.style_string, "font-family *: *[^;\"]", parent.font_family).trim();}
 		catch(CustomException ce)
@@ -535,6 +599,21 @@ public class HtmlData
 		}//catch().
 
 	}//extractFontData().
+
+	public String numbersAndPercent(String input)
+	{
+		try
+		{
+			return HtmlToPdfConverter.findFirstMatchWithDefaultValue(input, "^[0-9]+\\.?[0-9]*%?","0");
+		}//try.
+		catch(CustomException ce)
+		{
+			ce.setCodeDescription("numbersAndPercent()");
+			ce.severity=CustomException.SEVERE;
+			ce.writeLog(log);
+			return "0";
+		}//catch().
+	}//numbersAndPercent().
 
 	public String getStyle()
 	{return this.style_string;}
@@ -612,18 +691,17 @@ public class HtmlData
 		styling.append("\n\tborder_right_color: "+this.border_right_color);
 		styling.append("\n\tborder_bottom_color: "+this.border_bottom_color);
 		styling.append("\n\tborder_left_color: "+this.border_left_color);
-		styling.append("\n\tmargins: "+this.margins);
+		styling.append("\n\tmargins: "+Arrays.toString(this.margins));
 		styling.append("\n\tmargin_top: "+this.margin_top);
 		styling.append("\n\tmargin_right: "+this.margin_right);
 		styling.append("\n\tmargin_bottom: "+this.margin_bottom);
 		styling.append("\n\tmargin_left: "+this.margin_left);
-		styling.append("\n\tpaddings: "+this.paddings);
+		styling.append("\n\tpaddings: "+Arrays.toString(this.paddings));
 		styling.append("\n\tpadding_top: "+this.padding_top);
 		styling.append("\n\tpadding_right: "+this.padding_right);
 		styling.append("\n\tpadding_bottom: "+this.padding_bottom);
 		styling.append("\n\tpadding_left: "+this.padding_left);
 		styling.append("\n\tfont_size: "+this.font_size);
-		styling.append("\n\tchar_width: "+this.char_width);
 		styling.append("\n\tfont_family : "+this.font_family);
 		styling.append("\n\tbackground_color: "+this.background_color);
 

@@ -3,6 +3,7 @@ import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.LinkedList;
+import java.util.HashMap;
 
 import java.nio.file.Files;
 import java.nio.charset.Charset;
@@ -39,8 +40,11 @@ public class HtmlToPdfConverter
 
 	//A4 Width = 595.0
 	//A4 height = 842.0
-	private static double global_page_width=595;
-	private static double global_page_height=842;
+	//Landscape mode:
+	private static double global_page_width=842;
+	private static double global_page_height=595;
+
+	private static String[] builtinFonts = new String[] {"Courier","Courier-Bold","Courier-Oblique","Courier-BoldOblique","Helvetica","Helvetica-Bold","Helvetica-Oblique","Helvetica-BoldOblique","Symbol","Times-Roman","Times-Bold","Times-Italic","Times-BoldItalic","ZapfDingbats"};
 
 
 	public static void main(String[] args)
@@ -56,10 +60,13 @@ public class HtmlToPdfConverter
 
 		PDFElementProperties.setPageSize(global_page_width-10, global_page_height);
 
+		String[][] custom_font_files = new String[][] {{"Open Sans","open-sans.regular.ttf"}};
+		HashMap<String, BaseFont> custom_fonts = loadFonts(custom_font_files);
+
 		LinkedList<PDFElementProperties> flattened_elements = new LinkedList<PDFElementProperties>();
 		try
 		{
-			PDFElementProperties top_element=readXHTML(xhtml_string);
+			PDFElementProperties top_element=readXHTML(xhtml_string, custom_fonts);
 			flattenElements(flattened_elements, top_element);
 		}//try.
 		catch(CustomException ce)
@@ -69,9 +76,10 @@ public class HtmlToPdfConverter
 			{return;}
 		}//catch().
 
+
 		try (OutputStream os = new FileOutputStream(pdf_path))
 		{
-			generatePdf(flattened_elements, os);
+			generatePdf(flattened_elements, os, custom_fonts);
 		}//try.
 		catch(IOException ioe)
 		{
@@ -88,6 +96,40 @@ public class HtmlToPdfConverter
 			System.out.println("SEVERE: "+class_name+"IO Exception while trying to generate PDF:\n"+ioe);
 		}//catch().*/
 	}//main().
+
+	public static HashMap<String, BaseFont> loadFonts(String[][] font_files)
+	{
+		HashMap<String, BaseFont> custom_fonts = new HashMap<String, BaseFont>();
+		for(String[] name_and_file: font_files)
+		{
+			createBaseFont(name_and_file[1], name_and_file[0], custom_fonts);
+		}//for(name_and_file).
+		for(String font_name: builtinFonts)
+		{
+			createBaseFont(font_name, font_name, custom_fonts);
+		}//for(font_name);
+
+		return custom_fonts;
+	}//loadFonts().
+	private static void createBaseFont(String font_file_name, String font_name, HashMap<String, BaseFont> custom_fonts)
+	{
+		String font_encoding=BaseFont.IDENTITY_H;
+		if(font_file_name.equals(font_name))//inbuilt font.
+		{font_encoding=BaseFont.CP1252;};
+		try
+		{
+			BaseFont base_font = BaseFont.createFont(
+	            font_file_name, // e.g., "fonts/Roboto-Regular.ttf"
+	            font_encoding,     // for full Unicode support
+	            BaseFont.EMBEDDED        // embed font in the PDF
+	        );
+	        custom_fonts.put(font_name, base_font);
+		}//try.
+		catch(IOException ioe)
+		{
+			log.severe(class_name+" IO Exception while trying to createBaseFont '"+font_file_name+"':\n"+ioe);
+		}//catch().
+	}//createBaseFont().
 
 
 	public static String readFileToString(String file_path)
@@ -107,7 +149,7 @@ public class HtmlToPdfConverter
 	}//readFileToString().
 
 
-	private static PDFElementProperties readXHTML(String xhtml_string) throws CustomException
+	private static PDFElementProperties readXHTML(String xhtml_string, HashMap<String, BaseFont> custom_fonts) throws CustomException
 	{
 		//System.out.println(class_name+".readXHTML(): xhtml_string="+xhtml_string);//debug**
 
@@ -129,6 +171,9 @@ public class HtmlToPdfConverter
 
 			previous_match=current_match;
 			current_match = new HtmlData(matcher.start(), matcher.end(), matcher.group());
+
+			if(previous_match!=null)
+			{lookForUnenclosedText(xhtml_string, previous_match.end_index, current_match.start_index, parent_element, custom_fonts);}
 
 			if(current_match.is_opening)
 			{
@@ -158,34 +203,20 @@ public class HtmlToPdfConverter
 					parent_element=current_element;
 				}//else.
 			}//if.
-			else //closing tag. Get any text contained between opening and closing tag.
+			else //closing tag.
 			{
 				open_tags_count--;
 
-				//System.out.println("\n");//debug**
+				System.out.println("\n");//debug**
 			
 				if(!parent_element.getTag().equals(current_match.getTag()))
 				{throw new CustomException(CustomException.SEVERE, class_name, "Closing tag '"+current_match.getTag()+"' doesn't match current element tag '"+parent_element.getTag()+"'!","Trying to extract data from xhtml.");}
-			
+
 				if(parent_element.parent==null)//This closing tag closes the Top Level Element.
 				{
 					parent_element.closeTag();
 					break;
 				}//if.
-
-				int start_index = previous_match.end_index;
-				int end_index = current_match.start_index;
-				String contained_text = xhtml_string.substring(start_index, end_index);
-				try
-				{parent_element.setText(contained_text);}
-				catch(CustomException ce)
-				{
-					System.out.println("EXCEPTION while trying to setText");//debug**
-					if(ce.severity==CustomException.SEVERE)
-					{throw ce;}
-					
-					ce.writeLog(log);
-				}//catch().
 
 				parent_element.closeTag();
 				parent_element=parent_element.parent;
@@ -200,12 +231,58 @@ public class HtmlToPdfConverter
 		if(matches_count<=0)
 		{System.out.println("Warning: "+class_name+" no matches found");}
 
-		parent_element.calculateAbsolutePositions();
+		parent_element.calculateAbsolutePositions(null);
 
 		return parent_element;
 	}//readXHTML().
 
-	private static void generatePdf(LinkedList<PDFElementProperties> flattened_elements, OutputStream pdf_output_stream) throws IOException
+	private static void lookForUnenclosedText(String xhtml_string, int start_index, int end_index, PDFElementProperties parent_element, HashMap<String, BaseFont>custom_fonts) throws CustomException
+	{
+		String contained_text = xhtml_string.substring(start_index, end_index);
+		if(contained_text.trim().isEmpty())
+		{return;}
+
+		String font_family = parent_element.html_data.font_family;
+		double font_size = parent_element.html_data.font_size;
+
+		BaseFont base_font = null;
+		if(custom_fonts.containsKey(font_family))
+		{base_font=custom_fonts.get(font_family);}
+        else
+        {
+			try
+			{base_font=BaseFont.createFont();}//default font.
+			catch(IOException ioe)
+			{throw new CustomException(CustomException.SEVERE, class_name+".lookForUnenclosedText()", "Trying to create default font", ioe);}
+		}//else.
+
+    	String[] text_split = contained_text.trim().split(" ");
+    	String[][] text_words = new String[text_split.length][];
+    	String word="";
+    	for(int wi=0; wi<text_split.length; wi++)
+    	{
+    		if(wi<(text_split.length-1))
+    		{word=text_split[wi]+" ";}
+    		else
+    		{word=text_split[wi];}
+
+    		float width = base_font.getWidthPoint(word, (float)font_size);
+    		text_words[wi] = new String[] {word, String.valueOf(width)};
+    	}//for(word).
+
+		try
+		{parent_element.setText(text_words);}
+		catch(CustomException ce)
+		{
+			System.out.println("EXCEPTION while trying to setText");//debug**
+			if(ce.severity==CustomException.SEVERE)
+			{throw ce;}
+			
+			ce.writeLog(log);
+		}//catch().
+	}//lookForUnenclosedText().
+
+	private static void generatePdf(LinkedList<PDFElementProperties> flattened_elements, OutputStream pdf_output_stream, HashMap<String, BaseFont>custom_fonts) throws IOException
 	{
 		float page_width = (float)PDFElementProperties.getPageWidth();
 		float page_height = (float)PDFElementProperties.getPageHeight();
@@ -218,7 +295,7 @@ public class HtmlToPdfConverter
 						+ "\n\tborder_left="+page_rectangle.getBorderWidthLeft()
 						+ "\n\tborder_top="+page_rectangle.getBorderWidthTop());//debug**
 
-		Document document = new Document(PageSize.A4, 0, 0, 0, 0);
+		Document document = new Document(page_rectangle, 0, 0, 0, 0);
 		PdfWriter writer = PdfWriter.getInstance(document, pdf_output_stream);
 		document.open();
 
@@ -254,7 +331,7 @@ public class HtmlToPdfConverter
 			else if(tag.equals("text"))
 			{
 				BaseFont base_font = BaseFont.createFont();
-				Font default_font = new Font(base_font, element.getFontSize(), Font.NORMAL, Color.black);
+				Font default_font = new Font(base_font, (float)element.getFontSize(), Font.NORMAL, Color.black);
 				if(element.parent.getTag().equals("a"))
 				{
 					default_font.setStyle(Font.UNDERLINE);
@@ -358,7 +435,7 @@ public class HtmlToPdfConverter
 	{
 		if(source==null || regex==null || regex.trim().isEmpty())
 		{
-			throw new CustomException(CustomException.SEVERE, class_name+".findLastMatchWithDefaultValue()","'source' and 'regex' must both be defined!", "Trying to get last match");
+			throw new CustomException(CustomException.SEVERE, class_name+".findFirstMatch()","'source' and 'regex' must both be defined!", "Trying to get last match");
 		}//if.
 		if(source.trim().isEmpty())
 		{return "";}
@@ -382,6 +459,15 @@ public class HtmlToPdfConverter
 	{
 		return findFirstMatch(source, regex, null);
 	}//findFirstMatch().
+
+	public static String findFirstMatchWithDefaultValue(String source, String regex, String default_value) throws CustomException
+	{
+		String match = findFirstMatch(source, regex, null);
+		if(match.isEmpty())
+		{match=default_value;}
+
+		return match;
+	}//findFirstMatchWithDefaultValue().
 
 	//Example: findMatches("foobar bar foo", "fo+", Pattern.MULTILINE).
 	public static LinkedList<String> findMatches(String source, String regex, Integer pattern_option) throws CustomException
