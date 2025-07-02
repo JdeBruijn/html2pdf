@@ -335,7 +335,7 @@ public class PDFElementProperties
 			//Get width from image.
 			if(this.getTag().equals("img") && this.image!=null)//We grab the image on element creation so we know its width.
 			{
-				this.width = this.image.getWidth()+this.getBorderWidth("l")+this.getPadding("l")+this.getPadding("r")+this.getBorderWidth("r");			
+				this.width = this.image.getWidth()+this.getBorderWidth("l")+this.getPadding("l")+this.getPadding("r")+this.getBorderWidth("r");
 			}//if.
 			//System.out.println(class_name+".calculateSetWidth(): style_width==-1, returning.");//debug**
 		}//if.
@@ -671,6 +671,28 @@ public class PDFElementProperties
 		}//else.
 	}//placeChild().
 
+	protected double calculateImageHeight()
+	{
+		if(this.image==null)
+		{
+			log.severe(class_name+".calculateImageHeight(): this.image==null! Cannot calculate height.");
+			return 0;
+		}//if.
+
+		double image_width = this.image.getWidth();
+		double image_height = this.image.getHeight();
+
+		double ratio = image_height/image_width;
+
+		double placed_image_width = this.width-this.getBorderWidth("l")-this.getPadding("l")-this.getPadding("r")-this.getBorderWidth("r");
+		placed_image_width = StaticStuff.roundDownTo(placed_image_width,2);
+
+		double placed_image_height = StaticStuff.roundDownTo(ratio*placed_image_width, 2);
+
+		return placed_image_height;
+
+	}//calculateImageHeight().
+
 	protected void calculateHeight()
 	{
 		//System.out.println("\ncalculateHeight(): ");//debug**
@@ -683,7 +705,7 @@ public class PDFElementProperties
 			this.height=-1;
 			if(this.getTag().equals("img") && this.image!=null)
 			{
-				this.height=this.image.getHeight();
+				this.height=calculateImageHeight();
 				//System.out.println("IMAGE height: "+this.height);//debug**
 			}//if.
 		}//if.
