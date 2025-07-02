@@ -179,8 +179,6 @@ public class HtmlToPdfConverter
 			{
 				open_tags_count++;
 
-				PDFElementProperties current_element = new PDFElementProperties(parent_element, current_match);
-
 				if(parent_element!=null)
 				{
 					current_match.setParent(parent_element.html_data);
@@ -191,6 +189,9 @@ public class HtmlToPdfConverter
 				//System.out.println("\n\nMatch sequence: "+current_match.matched_sequence);//debug**
 				//System.out.println("current_match.parent: "+current_match.parent);//debug**
 				//System.out.println("opening match styling: "+current_match.printStyling());//debug**
+
+				PDFElementProperties current_element = new PDFElementProperties(parent_element, current_match);
+
 				
 				if(current_match.opening_and_closing)
 				{
@@ -207,7 +208,7 @@ public class HtmlToPdfConverter
 			{
 				open_tags_count--;
 
-				System.out.println("\n");//debug**
+			//	System.out.println("\n");//debug**
 			
 				if(!parent_element.getTag().equals(current_match.getTag()))
 				{throw new CustomException(CustomException.SEVERE, class_name, "Closing tag '"+current_match.getTag()+"' doesn't match current element tag '"+parent_element.getTag()+"'!","Trying to extract data from xhtml.");}
@@ -311,6 +312,9 @@ public class HtmlToPdfConverter
 
 		for(PDFElementProperties element: flattened_elements)
 		{
+			if(element.getWidth()<=0 || element.getHeight()<=0)
+			{continue;}
+
 			float llx = (float)element.absolute_left;
 			float lly = page_height-(float)element.absolute_bottom;
 			float urx = (float)element.absolute_right;
@@ -331,7 +335,7 @@ public class HtmlToPdfConverter
 			else if(tag.equals("text"))
 			{
 				BaseFont base_font = BaseFont.createFont();
-				Font default_font = new Font(base_font, (float)element.getFontSize(), Font.NORMAL, Color.black);
+				Font default_font = new Font(base_font, (float)element.getFontSize(), Font.NORMAL, element.getColor());
 				if(element.parent.getTag().equals("a"))
 				{
 					default_font.setStyle(Font.UNDERLINE);
@@ -352,6 +356,11 @@ public class HtmlToPdfConverter
 				rectangle.setBorderWidthRight((float)element.getBorderWidth("r"));
 				rectangle.setBorderWidthBottom((float)element.getBorderWidth("b"));
 				rectangle.setBorderWidthLeft((float)element.getBorderWidth("l"));
+				rectangle.setBackgroundColor(element.getBackgroundColor());
+				rectangle.setBorderColorTop(element.getBorderColor("t"));
+				rectangle.setBorderColorRight(element.getBorderColor("r"));
+				rectangle.setBorderColorBottom(element.getBorderColor("b"));
+				rectangle.setBorderColorLeft(element.getBorderColor("l"));
 				document.add(rectangle);
 			}//else.
 
@@ -429,119 +438,5 @@ public class HtmlToPdfConverter
 
 	}//generateExamplePdf().
 
-
-	//Example: findFirstMatch("foobar bar foo", "fo+", Pattern.MULTILINE).
-	public static String findFirstMatch(String source, String regex, Integer pattern_option) throws CustomException
-	{
-		if(source==null || regex==null || regex.trim().isEmpty())
-		{
-			throw new CustomException(CustomException.SEVERE, class_name+".findFirstMatch()","'source' and 'regex' must both be defined!", "Trying to get last match");
-		}//if.
-		if(source.trim().isEmpty())
-		{return "";}
-
-		Pattern pattern=null;
-		if(pattern_option!=null)
-		{pattern = Pattern.compile(regex, pattern_option);}
-		else
-		{pattern=Pattern.compile(regex);}
-
-		String result="";
-		Matcher matcher = pattern.matcher(source);
-		if(matcher.find())
-		{
-			result=matcher.group();
-		}//while.
-		return result;
-	}//findFirstMatch();
-
-	public static String findFirstMatch(String source, String regex) throws CustomException
-	{
-		return findFirstMatch(source, regex, null);
-	}//findFirstMatch().
-
-	public static String findFirstMatchWithDefaultValue(String source, String regex, String default_value) throws CustomException
-	{
-		String match = findFirstMatch(source, regex, null);
-		if(match.isEmpty())
-		{match=default_value;}
-
-		return match;
-	}//findFirstMatchWithDefaultValue().
-
-	//Example: findMatches("foobar bar foo", "fo+", Pattern.MULTILINE).
-	public static LinkedList<String> findMatches(String source, String regex, Integer pattern_option) throws CustomException
-	{
-		LinkedList<String> results = new LinkedList<String>();
-
-		if(source==null || regex==null || regex.trim().isEmpty())
-		{
-			throw new CustomException(CustomException.SEVERE, class_name+".findLastMatchWithDefaultValue()","'source' and 'regex' must both be defined!", "Trying to get last match");
-		}//if.
-		if(source.trim().isEmpty())
-		{return results;}
-
-		Pattern pattern=null;
-		if(pattern_option!=null)
-		{pattern = Pattern.compile(regex, pattern_option);}
-		else
-		{pattern=Pattern.compile(regex);}
-
-		Matcher matcher = pattern.matcher(source);
-		while(matcher.find())
-		{
-			results.add(matcher.group());
-		}//while.
-		return results;
-	}//findMatches().
-
-	public static LinkedList<String> findMatches(String source, String regex) throws CustomException
-	{
-		return findMatches(source, regex, null);
-	}//findMatches().
-
-	public static String findLastMatch(String source, String regex, Integer pattern_option) throws CustomException
-	{
-		if(source==null || regex==null || regex.trim().isEmpty())
-		{
-			throw new CustomException(CustomException.SEVERE, class_name,"'source' and 'regex' must both be defined!", "Trying to get last match");
-		}//if.
-		if(source.trim().isEmpty())
-		{return "";}
-
-		LinkedList<String> results = findMatches(source, regex, pattern_option);
-		if(results.size()<=0)
-		{return "";}
-
-		return results.get(results.size()-1);
-	}//findLastMatchWithDefaultValue().
-
-	public static String findLastMatch(String source, String regex) throws CustomException
-	{return findLastMatch(source, regex, null);}
-
-	public static String findLastMatchWithDefaultValue(String source, String regex, String default_value, Integer pattern_option) throws CustomException
-	{
-		if(source==null || source.trim().isEmpty())
-		{return default_value;}
-
-		String last_match = findLastMatch(source, regex, pattern_option);
-		if(last_match==null)
-		{last_match=default_value;}
-
-		return last_match;
-	}//findLastMatchWithDefaultValue().
-
-	public static String findLastMatchWithDefaultValue(String source, String regex, String default_value) throws CustomException
-	{return findLastMatchWithDefaultValue(source, regex, default_value, null);}
-
-	public static <T>T[] copyArray(T[] original_arr)
-	{
-		T[] new_arr = (T[])new Object[original_arr.length];
-		for(int index=0; index<original_arr.length; index++)
-		{new_arr[index]=original_arr[index];}
-
-		return new_arr;
-	}//copyArray().
-	
 
 }//class HtmlToPdfConverter.

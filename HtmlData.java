@@ -4,14 +4,40 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.LinkedList;
 import java.util.Arrays;
+import java.util.HashMap;
+
+import java.awt.Color;
 
 public class HtmlData
 {
+
+//Static variables.
 	private static final String class_name="HtmlData"; 
 	private static final Logger log = Logger.getLogger(class_name);
 
 	public static double font_width_multiplier=0.45;
 
+	HashMap<String, Color> colour_names = new HashMap<String,Color>()
+	{{
+		put("black", Color.BLACK);
+		put("blue", Color.BLUE);
+		put("cyan", Color.CYAN);
+		put("darkGray", Color.DARK_GRAY);
+		put("gray", Color.GRAY);
+		put("green", Color.GREEN);
+		put("lightGray", Color.LIGHT_GRAY);
+		put("magenta", Color.MAGENTA);
+		put("orange", Color.ORANGE);
+		put("pink", Color.PINK);
+		put("red", Color.RED);
+		put("white", Color.WHITE);
+		put("yellow", Color.YELLOW);
+	}};
+
+
+
+
+//Object variables.
 	public HtmlData parent=null;
 
 	public int start_index=-1;
@@ -48,10 +74,10 @@ public class HtmlData
 	public double border_right_width=0;
 	public double border_bottom_width=0;
 	public double border_left_width=0;
-	public String border_top_color="";
-	public String border_right_color="";
-	public String border_bottom_color="";
-	public String border_left_color="";
+	public Color border_top_color=Color.BLACK;
+	public Color border_right_color=Color.BLACK;
+	public Color border_bottom_color=Color.BLACK;
+	public Color border_left_color=Color.BLACK;
 
 	public String[] margins=new String[0];
 	public String margin_top="0";
@@ -68,8 +94,8 @@ public class HtmlData
 	public double font_size=12.0;
 	public String font_family = "Times-Roman";
 
-	public String background_color="white";
-
+	public Color fg_color = Color.BLACK;
+	public Color background_color=Color.WHITE;
 
 
 	public HtmlData(int start, int end, String sequence)
@@ -91,15 +117,15 @@ public class HtmlData
 	{
 		String tag_match="";
 		try
-		{tag_match = HtmlToPdfConverter.findFirstMatch(this.matched_sequence, "</?[^ ]+");}
+		{tag_match = StaticStuff.findFirstMatch(this.matched_sequence, "</?[^ ]+");}
 		catch(CustomException ce)
 		{ce.writeLog(log);}
 
-    	if(tag_match!="")
-    	{this.tag = tag_match.replaceAll("[</>]+","").toLowerCase();}
-    	else
-    	{System.out.println("SEVERE: "+class_name+".extractTag(): failed to find tag in '"+this.matched_sequence+"'!");}
-    	//System.out.println(class_name+" tag="+tag);//debug**
+		if(tag_match!="")
+		{this.tag = tag_match.replaceAll("[</>]+","").toLowerCase();}
+		else
+		{System.out.println("SEVERE: "+class_name+".extractTag(): failed to find tag in '"+this.matched_sequence+"'!");}
+		//System.out.println(class_name+" tag="+tag);//debug**
 	}//extractTag().
 
 	private void checkIsOpening()
@@ -145,15 +171,15 @@ public class HtmlData
 
 		String style_match="";
 		try
-    	{style_match = HtmlToPdfConverter.findLastMatch(this.matched_sequence, "style *= *\"[^\"]+\"", Pattern.MULTILINE);}
-    	catch(CustomException ce)
-    	{ce.writeLog(log);}
+		{style_match = StaticStuff.findLastMatch(this.matched_sequence, "style *= *\"[^\"]+\"", Pattern.MULTILINE);}
+		catch(CustomException ce)
+		{ce.writeLog(log);}
 
-    	//System.out.println(class_name+".extractStyleString(): this:"+this.toString());//debug**
-    	//System.out.println("style_match="+style_match);//debug**
+		//System.out.println(class_name+".extractStyleString(): this:"+this.toString());//debug**
+		//System.out.println("style_match="+style_match);//debug**
 
-    	if(style_match!="")
-    	{this.style_string = style_match.replaceAll("style *= *|\"","").replaceAll("\n"," ");}
+		if(style_match!="")
+		{this.style_string = style_match.replaceAll("style *= *|\"","").replaceAll("\n"," ");}
 	}//extractStyleString().
 
 /*	This is a bad implementation. Built the same idea into 'extractStyleProperties()' and associated sub-methods.
@@ -213,12 +239,12 @@ public class HtmlData
 
 	//Width and Height.
 		this.width = extractStyleDimension("width", default_width, parent.width, "-1");
-		if(this.width.contains("%") && parent.width.equals("-1"))//Can't have % width if parent's width is 'auto'.
-		{this.width="-1";}
+	//	if(this.width.contains("%") && parent.width.equals("-1"))//Can't have % width if parent's width is 'auto'.
+	//	{this.width="-1";}
 
 		this.max_width = extractStyleDimension("max-width", "-1", parent.max_width, "-1");
-		if(this.max_width.contains("%") && parent.width.equals("-1"))
-		{this.max_width="-1";}
+	//	if(this.max_width.contains("%") && parent.width.equals("-1"))
+	//	{this.max_width="-1";}
 
 		this.min_width = extractStyleDimension("min-width", "0", parent.min_width, "0");
 
@@ -242,9 +268,33 @@ public class HtmlData
 	//Font
 		extractFontData();
 
-	//Background-color
+	//Foreground Color
 		try
-		{this.background_color=HtmlToPdfConverter.findLastMatchWithDefaultValue(this.style_string, "background-color", parent.background_color);}
+		{
+			String style_fg_color = StaticStuff.findLastMatch(this.style_string, "^|; *color *:[^;\"]+");
+			style_fg_color = style_fg_color.replaceAll(".*color *:","");
+			if(style_fg_color.trim().equals("inherit"))
+			{this.fg_color=parent.fg_color;}
+			else
+			{this.fg_color = extractColor(style_fg_color, parent.fg_color);}
+		}//try.
+		catch(CustomException ce)
+		{
+			ce.setCodeDescription("Trying to extract 'color' from style_string");
+			ce.writeLog(log);
+			this.fg_color=parent.fg_color;
+		}//catch().
+
+	//Background Color
+		try
+		{
+			String style_bg_color = StaticStuff.findLastMatch(this.style_string, "background(-color)? *:[^;\"]+");
+			style_bg_color = style_bg_color.replaceAll("background(-color)? *:","");
+			if(style_bg_color.trim().equals("inherit"))
+			{this.background_color=parent.background_color;}
+			else
+			{this.background_color = extractColor(style_bg_color, parent.background_color);}
+		}//try.
 		catch(CustomException ce)
 		{
 			ce.setCodeDescription("Trying to extract 'background-color' from style_string");
@@ -263,7 +313,7 @@ public class HtmlData
 	//Style Position.	
 		String match=parent.position;
 		try
-		{match = HtmlToPdfConverter.findLastMatch(this.style_string, "position *:[^;]+");}
+		{match = StaticStuff.findLastMatch(this.style_string, "position *:[^;]+");}
 		catch(CustomException ce)
 		{
 			ce.setCodeDescription("Trying to extract 'position' from style_string");
@@ -282,7 +332,7 @@ public class HtmlData
 	//Style Float.
 		match=parent.float_side;
 		try
-		{match = HtmlToPdfConverter.findLastMatch(this.style_string, "float *:[^;]+");}
+		{match = StaticStuff.findLastMatch(this.style_string, "float *:[^;]+");}
 		catch(CustomException ce)
 		{
 			ce.setCodeDescription("Trying to get 'float' from style_string");
@@ -300,7 +350,7 @@ public class HtmlData
 	{
 		String match=parent.display;
 		try
-		{match = HtmlToPdfConverter.findLastMatch(this.style_string, "display *:[^;]+");}
+		{match = StaticStuff.findLastMatch(this.style_string, "display *:[^;]+");}
 		catch(CustomException ce)
 		{
 			ce.setCodeDescription("Trying to extract 'display' from style_string");
@@ -335,7 +385,7 @@ public class HtmlData
 
 		String value=default_value;
 		try
-		{value = HtmlToPdfConverter.findLastMatch(this.style_string, property_name+" *:[^;\"]+");}
+		{value = StaticStuff.findLastMatch(this.style_string, property_name+" *:[^;\"]+");}
 		catch(CustomException ce)
 		{
 			ce.setCodeDescription("Trying to extract '"+property_name+"' from style_string");
@@ -399,10 +449,10 @@ public class HtmlData
 		this.border_bottom_width=Integer.parseInt(bottom_border_data[0].replaceAll("none","0").replaceAll("[^0-9]+",""));
 		this.border_left_width=Integer.parseInt(left_border_data[0].replaceAll("none","0").replaceAll("[^0-9]+",""));
 
-		this.border_top_color=top_border_data[2];
-		this.border_right_color=right_border_data[2];
-		this.border_bottom_color=bottom_border_data[2];
-		this.border_left_color=left_border_data[2];
+		this.border_top_color=extractColor(top_border_data[2], Color.BLACK);
+		this.border_right_color=extractColor(right_border_data[2], Color.BLACK);
+		this.border_bottom_color=extractColor(bottom_border_data[2], Color.BLACK);
+		this.border_left_color=extractColor(left_border_data[2], Color.BLACK);
 	}//extractBorderData().
 	private String[] extractBorderDataHelper(String side, String parent_value)
 	{
@@ -410,7 +460,7 @@ public class HtmlData
 		String[] border_values = new String[] {"0", "solid", "black"};
 		String match_value="";
 		try
-		{match_value = HtmlToPdfConverter.findLastMatch(this.style_string, "border"+side+" *:[^;\"]+").replaceAll("border"+side+" *:","").trim();}
+		{match_value = StaticStuff.findLastMatch(this.style_string, "border"+side+" *:[^;\"]+").replaceAll("border"+side+" *:","").trim();}
 		catch(CustomException ce)
 		{
 			ce.setCodeDescription("Trying to extract 'border"+side+"' from style_string");
@@ -455,7 +505,7 @@ public class HtmlData
 		//this.margins = extractStyleDimension("margin", "0", parent.margins, "none");
 		String style_all_margins="";
 		try
-		{style_all_margins = HtmlToPdfConverter.findLastMatch(this.style_string, "margin *:[^;\"]+").replaceAll("margin *:","").trim();}
+		{style_all_margins = StaticStuff.findLastMatch(this.style_string, "margin *:[^;\"]+").replaceAll("margin *:","").trim();}
 		catch(CustomException ce)
 		{
 			ce.setCodeDescription("Trying to get 'margin'");
@@ -516,7 +566,7 @@ public class HtmlData
 		//this.paddings = extractStyleDimension("padding", "0", parent.paddings, "none");
 		String style_all_paddings="";
 		try
-		{style_all_paddings = HtmlToPdfConverter.findLastMatch(this.style_string, "padding *:[^;\"]+").replaceAll("padding *:","").trim();}
+		{style_all_paddings = StaticStuff.findLastMatch(this.style_string, "padding *:[^;\"]+").replaceAll("padding *:","").trim();}
 		catch(CustomException ce)
 		{
 			ce.setCodeDescription("Trying to get 'padding'");
@@ -575,7 +625,7 @@ public class HtmlData
 		String font_size_str="";
 		try
 		{
-			font_size_str = HtmlToPdfConverter.findLastMatchWithDefaultValue(this.style_string, "font-size *: *[0-9.]+", String.valueOf(parent.font_size));
+			font_size_str = StaticStuff.findLastMatchWithDefaultValue(this.style_string, "font-size *: *[0-9.]+", String.valueOf(parent.font_size));
 			this.font_size=Double.parseDouble(font_size_str.replaceAll("[^0-9.]+",""));
 		}//try.
 		catch(CustomException ce)
@@ -590,7 +640,7 @@ public class HtmlData
 		}//catch().
 
 		try
-		{this.font_family = HtmlToPdfConverter.findLastMatchWithDefaultValue(this.style_string, "font-family *: *[^;\"]", parent.font_family).trim();}
+		{this.font_family = StaticStuff.findLastMatchWithDefaultValue(this.style_string, "font-family *: *[^;\"]", parent.font_family).trim();}
 		catch(CustomException ce)
 		{
 			ce.setCodeDescription("Trying to extract 'font-family' from style_string");
@@ -604,7 +654,7 @@ public class HtmlData
 	{
 		try
 		{
-			return HtmlToPdfConverter.findFirstMatchWithDefaultValue(input, "^[0-9]+\\.?[0-9]*%?","0");
+			return StaticStuff.findFirstMatchWithDefaultValue(input, "^[0-9]+\\.?[0-9]*%?","0");
 		}//try.
 		catch(CustomException ce)
 		{
@@ -615,6 +665,44 @@ public class HtmlData
 		}//catch().
 	}//numbersAndPercent().
 
+
+	private Color extractColor(String colour_str, Color default_colour)
+	{
+	//	System.out.println("extractColor(): colour_str: "+colour_str);//debug**
+		if(colour_str==null || colour_str.trim().isEmpty())
+		{return default_colour;}
+
+		Color colour=null;
+
+		colour_str=colour_str.trim();
+		if(colour_str.matches("[a-zA-Z]+"))
+		{colour = colour_names.get(colour_str.toLowerCase());}
+
+		if(colour!=null)
+		{return colour;}
+
+		if(colour_str.matches("^#([a-fA-F0-9]){3}$"))
+		{
+			char r = colour_str.charAt(1);
+			char g = colour_str.charAt(2);
+			char b = colour_str.charAt(3);
+			colour_str = "#"+r+r+g+g+b+b;
+		}//if.
+
+		try
+		{colour = Color.decode(colour_str);}
+		catch(NumberFormatException nfe)
+		{
+			log.warning(class_name+".extractColor(): Number Format Exception when trying to get Color from '"+colour_str+"':\n"+nfe);
+			colour =  default_colour;
+		}//catch().
+
+	//	System.out.println(" colour: "+colour.toString());//debug**
+
+		return colour;
+	}//extractColor().
+
+
 	public String getStyle()
 	{return this.style_string;}
 
@@ -622,13 +710,13 @@ public class HtmlData
 	{
 		String href_match="";
 		try
-    	{href_match = HtmlToPdfConverter.findLastMatch(this.matched_sequence, "href *= *\"[^\"]+", Pattern.MULTILINE);}
-    	catch(CustomException ce)
-    	{ce.writeLog(log);}
+		{href_match = StaticStuff.findLastMatch(this.matched_sequence, "href *= *\"[^\"]+", Pattern.MULTILINE);}
+		catch(CustomException ce)
+		{ce.writeLog(log);}
 
-    	if(href_match!="")
-    	{this.href = href_match.replaceAll("href *= *\"","").replaceAll("\n","").trim();}
-    	//System.out.println(class_name+" href="+this.href);//debug**
+		if(href_match!="")
+		{this.href = href_match.replaceAll("href *= *\"","").replaceAll("\n","").trim();}
+		//System.out.println(class_name+" href="+this.href);//debug**
 	}//extractHref().
 
 	public String getHref()
@@ -638,13 +726,13 @@ public class HtmlData
 	{
 		String src_match="";
 		try
-    	{src_match = HtmlToPdfConverter.findLastMatch(this.matched_sequence, "src *= *\"[^\"]+", Pattern.MULTILINE);}
-    	catch(CustomException ce)
-    	{ce.writeLog(log);}
+		{src_match = StaticStuff.findLastMatch(this.matched_sequence, "src *= *\"[^\"]+", Pattern.MULTILINE);}
+		catch(CustomException ce)
+		{ce.writeLog(log);}
 
-    	if(src_match!="")
-    	{this.src = src_match.replaceAll("src *= *\"","").replaceAll("\n","").trim();}
-    	//System.out.println(class_name+" src="+this.src);//debug**
+		if(src_match!="")
+		{this.src = src_match.replaceAll("src *= *\"","").replaceAll("\n","").trim();}
+		//System.out.println(class_name+" src="+this.src);//debug**
 	}//extractSrc().
 
 	public String getSrc()
