@@ -18,6 +18,10 @@ public class CustomException extends Exception
 	public static final int SEVERE=1;
 	public static final int WARNING=2;
 	public static final int INFO=3;
+	public static final int DEBUG=4;//Actually uses 'log.info' but will only be logged when 'log_level' (below) is set>=4.
+
+	//Which logs to actually print.
+	public static int log_level=3;//1=severe only. 2=warning & severe. 3=info, warning and severe.
 
 	private static final long serialVersionUID = 5332434849283211406L;
 
@@ -82,20 +86,41 @@ public class CustomException extends Exception
 
 	public void writeLog(Logger logger)
 	{
-		if(this.severity==SEVERE)
+		writeLog(this.severity, logger, this.toString());
+	}//writeLog().
+
+	public static void writeLog(int severity, Logger logger, String log_string)
+	{
+		if(severity>log_level)
+		{return;}
+
+		if(severity==SEVERE)
 		{
-			logger.severe(this.toString());
-			System.out.println("SEVERE "+this.toString());//debug**
+			if(logger!=null)
+			{logger.severe(log_string);}
+			else
+			{System.out.println("SEVERE "+log_string);}
 		}
-		else if(this.severity==WARNING)
+		else if(severity==WARNING)
 		{
-			logger.warning(this.toString());
-			System.out.println("WARNING "+this.toString());//debug**
+			if(logger!=null)
+			{logger.warning(log_string);}
+			else
+			{System.out.println("WARNING "+log_string);}
+		}
+		else if(severity==INFO)
+		{
+			if(logger!=null)
+			{logger.info(log_string);}
+			else
+			{System.out.println("INFO "+log_string);}
 		}
 		else
 		{
-			logger.info(this.toString());
-			System.out.println("INFO "+this.toString());//debug**
+			if(logger!=null)
+			{logger.info(log_string);}
+			else
+			{System.out.println("DEBUG "+log_string);}
 		}
 	}//writeLog().
 

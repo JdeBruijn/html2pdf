@@ -49,20 +49,35 @@ public class HtmlToPdfConverter
 
 	public static void main(String[] args)
 	{
+		CustomException.log_level=CustomException.INFO;
+
 		if(args.length<=0 || args[0]==null || args[0].trim().length()<=0)
 		{
-			System.out.println("SEVERE: "+"Please specify a XHTML input file. Usage:\n\tjava HtmlToPdfConverter 'path/to/file.xhtml'");
+			System.out.println("SEVERE: "+"Please specify a XHTML input file. Usage:\n\tjava HtmlToPdfConverter 'path/to/file.html' ['path/to/css.file']");
 			return;
 		}//if.
 		String xhtml_path = args[0];
 		String pdf_path = xhtml_path.replaceAll("\\.x?html",".pdf");
 		String xhtml_string = readFileToString(xhtml_path);
 
-		PDFElementProperties.setPageSize(global_page_width-10, global_page_height);
+		if(args.length>=2)//css file specified
+		{
+		//	CustomException.log_level=CustomException.DEBUG;
+
+			System.out.println("Inlining css...");//debug**
+			String css_path = args[1];
+			CSSInliner css_inliner = new CSSInliner(css_path);
+			xhtml_string = css_inliner.inline(xhtml_string);
+
+			CustomException.log_level=CustomException.INFO;
+		}//if.
+
+		PDFElementProperties.setPageSize(global_page_width, global_page_height);
 
 		String[][] custom_font_files = new String[][] {{"Open Sans","open-sans.regular.ttf"}};
 		HashMap<String, BaseFont> custom_fonts = loadFonts(custom_font_files);
 
+		CustomException.log_level=CustomException.DEBUG;
 		LinkedList<PDFElementProperties> flattened_elements = new LinkedList<PDFElementProperties>();
 		try
 		{
@@ -75,8 +90,10 @@ public class HtmlToPdfConverter
 			if(ce.severity<CustomException.WARNING)
 			{return;}
 		}//catch().
+		CustomException.log_level=CustomException.INFO;
 
 
+		//CustomException.log_level=CustomException.DEBUG;
 		try (OutputStream os = new FileOutputStream(pdf_path))
 		{
 			generatePdf(flattened_elements, os, custom_fonts);
@@ -84,7 +101,8 @@ public class HtmlToPdfConverter
 		catch(IOException ioe)
 		{
 			System.out.println("SEVERE: "+class_name+"IO Exception while trying to generate PDF:\n"+ioe);
-		}//catch().
+		}//catch().*/
+		CustomException.log_level=CustomException.INFO;
 
 
 		/*try (OutputStream os = new FileOutputStream("example.pdf"))
@@ -151,9 +169,12 @@ public class HtmlToPdfConverter
 
 	private static PDFElementProperties readXHTML(String xhtml_string, HashMap<String, BaseFont> custom_fonts) throws CustomException
 	{
-		//System.out.println(class_name+".readXHTML(): xhtml_string="+xhtml_string);//debug**
+		CustomException.writeLog(CustomException.DEBUG, null, class_name+".readXHTML(): ");//debug**
 
-		Pattern pattern = Pattern.compile("<[^<>]+>", Pattern.MULTILINE);
+		//Remove <head> since it's not relevant.
+		xhtml_string = Pattern.compile("<head>.*</head>", Pattern.DOTALL).matcher(xhtml_string).replaceAll("");
+
+		Pattern pattern = Pattern.compile("<[^<>]+>|<!--", Pattern.MULTILINE);
 		Matcher matcher = pattern.matcher(xhtml_string);
 
 		int matches_count=0;
@@ -162,18 +183,33 @@ public class HtmlToPdfConverter
 		HtmlData current_match=null;
 		PDFElementProperties parent_element=null;
 		boolean previous_tag_was_closing=false; //Keeps track of whether the current element is a leaf child or is still a parent.
+		boolean comment_open=false;
+		int comment_close_index=0;
 		while(matcher.find())
 		{
-			matches_count++;
+			if(matcher.start()<comment_close_index)
+			{continue;}
+
+			//CustomException.writeLog(CustomException.DEBUG, null, " matcher.group(): "+matcher.group());//debug**
+
+			if(matcher.group().startsWith("<!--") || matcher.group().contains("<!--"))
+			{
+			//	CustomException.writeLog(CustomException.DEBUG, null, class_name+" comment matcher.group()="+matcher.group());//debug**
+				comment_close_index = xhtml_string.indexOf("-->",matcher.start())+3;
+			//	CustomException.writeLog(CustomException.DEBUG, null, class_name+" comment start index="+matcher.start()+" comment close index="+comment_close_index);//debug**
+				continue;
+			}//if.
 
 			if(matcher.group().startsWith("<!DOCTYPE"))
 			{continue;}
+
+			matches_count++;
 
 			previous_match=current_match;
 			current_match = new HtmlData(matcher.start(), matcher.end(), matcher.group());
 
 			if(previous_match!=null)
-			{lookForUnenclosedText(xhtml_string, previous_match.end_index, current_match.start_index, parent_element, custom_fonts);}
+			{lookForUnenclosedText(xhtml_string, Math.max(previous_match.end_index, comment_close_index), current_match.start_index, parent_element, custom_fonts);}
 
 			if(current_match.is_opening)
 			{
@@ -257,7 +293,7 @@ public class HtmlToPdfConverter
 			{throw new CustomException(CustomException.SEVERE, class_name+".lookForUnenclosedText()", "Trying to create default font", ioe);}
 		}//else.
 
-    	String[] text_split = contained_text.trim().split(" ");
+    	String[] text_split = contained_text.trim().replaceAll(" {2,}"," ").split(" ");
     	String[][] text_words = new String[text_split.length][];
     	String word="";
     	for(int wi=0; wi<text_split.length; wi++)
@@ -288,13 +324,14 @@ public class HtmlToPdfConverter
 		float page_width = (float)PDFElementProperties.getPageWidth();
 		float page_height = (float)PDFElementProperties.getPageHeight();
 
+		CustomException.writeLog(CustomException.INFO, null, class_name+".generatePdf(): page_width:"+page_width+" page_height:"+page_height);//INFO
 		//Font font1 = FontFactory.getFont("Helvetica", 8, Font.BOLD, Color.BLACK);
 		//Rectangle page_rectangle = PageSize.A4;
 		Rectangle page_rectangle = new RectangleReadOnly(page_width, page_height);
-		System.out.println("page_rectangle:"
-						+ "\n\t"+page_rectangle
-						+ "\n\tborder_left="+page_rectangle.getBorderWidthLeft()
-						+ "\n\tborder_top="+page_rectangle.getBorderWidthTop());//debug**
+		//System.out.println("page_rectangle:"
+		//				+ "\n\t"+page_rectangle
+		//				+ "\n\tborder_left="+page_rectangle.getBorderWidthLeft()
+		//				+ "\n\tborder_top="+page_rectangle.getBorderWidthTop());//debug**
 
 		Document document = new Document(page_rectangle, 0, 0, 0, 0);
 		PdfWriter writer = PdfWriter.getInstance(document, pdf_output_stream);
@@ -321,7 +358,7 @@ public class HtmlToPdfConverter
 			float ury = page_height-(float)element.absolute_top;
 
 			String tag = element.getTag();
-			if(tag.equals("img"))
+			if(tag.equals("img") && element.image!=null)
 			{
 				com.lowagie.text.Image image_element = com.lowagie.text.Image.getInstance(element.image, null);
 				image_element.scaleToFit((float)element.width, (float)element.height);
@@ -334,6 +371,7 @@ public class HtmlToPdfConverter
 			}//if.
 			else if(tag.equals("text"))
 			{
+				CustomException.writeLog(CustomException.DEBUG, null, " font_size:"+element.getFontSize()+" text:"+element.getText());//debug**
 				BaseFont base_font = BaseFont.createFont();
 				Font default_font = new Font(base_font, (float)element.getFontSize(), Font.NORMAL, element.getColor());
 				if(element.parent.getTag().equals("a"))

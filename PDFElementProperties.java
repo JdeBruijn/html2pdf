@@ -119,7 +119,7 @@ public class PDFElementProperties
 
 	public PDFElementProperties(PDFElementProperties parent, HtmlData html_data) throws CustomException
 	{
-		//System.out.println("PDFElementProperties(): ");//debug**
+		//CustomException.writeLog(CustomException.DEBUG, null, "PDFElementProperties(): ");//debug**
 		this.html_data=html_data;
 		this.tag=html_data.getTag();
 
@@ -190,32 +190,40 @@ public class PDFElementProperties
 
 		calculateMaxHeight();
 
+		calculateSetHeight();
+
 	}//firstDownwardPass().
 
 	public void calculateAbsolutePositions(PDFElementProperties parent)
 	{
-	//	System.out.println("\ncalculateAbsolutePositions(): matched_sequence: "+this.html_data.matched_sequence);//debug**
+	//	CustomException.writeLog(CustomException.DEBUG, null, "\ncalculateAbsolutePositions(): matched_sequence: "+this.html_data.matched_sequence);//debug**
 		double parent_top=0;
 		double parent_left=0;
 		if(parent!=null)
 		{
-			//System.out.println(" parent.matched_sequence: "+parent.html_data.matched_sequence);//debug**
+			//CustomException.writeLog(CustomException.DEBUG, null, " parent.matched_sequence: "+parent.html_data.matched_sequence);//debug**
 			parent_top=parent.absolute_top+parent.getMinChildTop();
 			parent_left=parent.absolute_left+parent.getMinChildLeft();
-			//System.out.println(" parent.width: "+parent.width+" parent.padding_left: "+parent.getPadding("l")+" parent.border_right: "+parent.getBorderWidth("l"));//debug**
+			//CustomException.writeLog(CustomException.DEBUG, null, " parent.width: "+parent.width+" parent.padding_left: "+parent.getPadding("l")+" parent.border_right: "+parent.getBorderWidth("l"));//debug**
 		}//if.
-		//System.out.println(" parent_top: "+parent_top+" this.top: "+this.top);//debug**
-		//System.out.println(" parent_left: "+parent_left+" this.left: "+this.left);//debug**
+		//CustomException.writeLog(CustomException.DEBUG, null, " parent_top: "+parent_top+" this.top: "+this.top);//debug**
+		//CustomException.writeLog(CustomException.DEBUG, null, " parent_left: "+parent_left+" this.left: "+this.left);//debug**
 		this.absolute_top=parent_top+this.top;
 		this.absolute_left=parent_left+this.left;
 		this.absolute_right=this.absolute_left+this.width;
 		this.absolute_bottom=this.absolute_top+this.height;
 		
-	//	System.out.println(this.printAbsoluteLocationData());//debug**
-	//	System.out.println(this.printRelativeLocationData());//debug**
+	//	CustomException.writeLog(CustomException.DEBUG, null, this.printAbsoluteLocationData());//debug**
+	//	CustomException.writeLog(CustomException.DEBUG, null, this.printRelativeLocationData());//debug**
 
-		if(this.absolute_bottom>page_height)
-		{page_height=this.absolute_bottom;}
+		double parent_bottom_padding=0;
+		if(this.parent!=null)
+		{parent_bottom_padding=this.parent.getPadding("b");}
+
+		if((this.absolute_bottom+parent_bottom_padding)>page_height)
+		{
+			page_height=this.absolute_bottom+parent_bottom_padding;
+		}//if.
 
 		for(PDFElementProperties child: this.children)
 		{
@@ -233,7 +241,7 @@ public class PDFElementProperties
 	{
 		if(this.top==-1)
 		{
-			System.out.println("Warning: "+class_name+".getMinChildTop(): this.top is unset, can't calculate getMinChildTop!");
+			CustomException.writeLog(CustomException.WARNING, null, class_name+".getMinChildTop(): this.top is unset, can't calculate getMinChildTop!");
 			return -1;
 		}//if.
 
@@ -244,7 +252,7 @@ public class PDFElementProperties
 	{
 		if(this.left==-1)
 		{
-			System.out.println("Warning: "+class_name+".minChildLeft(): this.top is unset, can't calculate minChildLeft!");
+			CustomException.writeLog(CustomException.WARNING, null, class_name+".minChildLeft(): this.top is unset, can't calculate minChildLeft!");
 			return -1;
 		}//if.
 
@@ -255,8 +263,8 @@ public class PDFElementProperties
 	//Calculated based on the minimum of html_data.max_width and parent.max_width.
 	protected void calculateMaxWidth()
 	{
-	//	System.out.println("\ncalculateMaxWidth():");//debug**
-	//	System.out.println(" sequence: "+this.html_data.matched_sequence);//debug**
+	//	CustomException.writeLog(CustomException.DEBUG, null, "\ncalculateMaxWidth():");//debug**
+	//	CustomException.writeLog(CustomException.DEBUG, null, " sequence: "+this.html_data.matched_sequence);//debug**
 
 		if(this.parent==null)//Top level element.
 		{this.max_width=page_width;}
@@ -272,7 +280,7 @@ public class PDFElementProperties
 		if(style_max_width_str.contains("%"))//Percentage.
 		{
 			style_max_width_str=style_max_width_str.replaceAll("%","");
-			style_max_width = (this.max_width*Double.parseDouble(style_max_width_str))/100;
+			style_max_width = StaticStuff.roundDownTo((this.max_width*Double.parseDouble(style_max_width_str))/100,3);
 		}//if.
 		else if(style_max_width_str.equals("-1"))//Unset.
 		{style_max_width=this.max_width;}
@@ -281,7 +289,7 @@ public class PDFElementProperties
 
 		this.max_width=Math.min(this.max_width, style_max_width);
 
-	//	System.out.println(" this.max_width: "+this.max_width);//debug**
+	//	CustomException.writeLog(CustomException.DEBUG, null, " this.max_width: "+this.max_width);//debug**
 
 		//this.max_width=this.max_width-this.getMargin("l",this.max_width)-(this.getBorderWidth("l")/2)-(this.getBorderWidth("r")/2)-this.getMargin("r",this.max_width);
 	}//calculateMaxWidth().
@@ -301,7 +309,7 @@ public class PDFElementProperties
 			if(style_max_height_str.contains("%") && this.max_height>-1)//Percentage. No point finding percentage height if parent height is 'auto'.
 			{
 				double percentage_height=Double.parseDouble(style_max_height_str.replaceAll("%",""));
-				style_max_height = (this.max_height*percentage_height)/100;
+				style_max_height = StaticStuff.roundDownTo((this.max_height*percentage_height)/100,3);
 			}//else.
 			else
 			{style_max_height=Integer.parseInt(style_max_height_str);}
@@ -322,10 +330,13 @@ public class PDFElementProperties
 		if(this.width_calculated)
 		{return;}
 
-	//	System.out.println("calculateSetWidth(): ");//debug**
-	//	System.out.println(" matched_sequence: "+this.html_data.matched_sequence);//debug**
-	//	System.out.println(" style_width: "+this.html_data.width);//debug**
-	//	System.out.println(" html_data: "+html_data.printStyling());//debug**
+		if(this.getTag().equals("img"))
+		{
+			CustomException.writeLog(CustomException.DEBUG, null, "calculateSetWidth(): ");//debug**
+	//		CustomException.writeLog(CustomException.DEBUG, null, " matched_sequence: "+this.html_data.matched_sequence);//debug**
+	//		CustomException.writeLog(CustomException.DEBUG, null, " style_width: "+this.html_data.width);//debug**
+	//		CustomException.writeLog(CustomException.DEBUG, null, " html_data: "+html_data.printStyling());//debug**
+		}//if.
 
 		String style_width = this.html_data.width;
 
@@ -335,9 +346,9 @@ public class PDFElementProperties
 			//Get width from image.
 			if(this.getTag().equals("img") && this.image!=null)//We grab the image on element creation so we know its width.
 			{
-				this.width = this.image.getWidth()+this.getBorderWidth("l")+this.getPadding("l")+this.getPadding("r")+this.getBorderWidth("r");
+				this.width = calculateImageDimensions(this.width, this.height)[0];
 			}//if.
-			//System.out.println(class_name+".calculateSetWidth(): style_width==-1, returning.");//debug**
+			//CustomException.writeLog(CustomException.DEBUG, null, class_name+".calculateSetWidth(): style_width==-1, returning.");//debug**
 		}//if.
 		else if(style_width.endsWith("%"))//Percentage.
 		{
@@ -345,17 +356,17 @@ public class PDFElementProperties
 			if(this.parent!=null)
 			{
 				this.parent.getMaxPossibleChildWidth();
-				this.width = (this.parent.getMaxPossibleChildWidth()*percentage)/100;
+				this.width = StaticStuff.roundTo((this.parent.getMaxPossibleChildWidth()*percentage)/100,3);
 			}//if.
 			else
-			{this.width = (page_width*percentage)/100;}
-			//System.out.println(" width: "+this.width);//debug**
+			{this.width = StaticStuff.roundTo((page_width*percentage)/100,3);}
+	//		CustomException.writeLog(CustomException.DEBUG, null, " width: "+this.width);//debug**
 		}//else if.
 		else//Fixed size.
 		{this.width = Double.parseDouble(style_width);}
 
 
-	//	System.out.println(" width: "+this.width);//debug**
+	//	CustomException.writeLog(CustomException.DEBUG, null, " width: "+this.width);//debug**
 
 		if(this.width!=-1)//Width is fixed, won't be changed from here on.
 		{
@@ -368,11 +379,128 @@ public class PDFElementProperties
 		this.width_calculated=true;
 	}//calculateSetWidth().
 
+	protected void calculateSetHeight()
+	{
+		if(this.getTag().equals("img"))
+		{
+			CustomException.writeLog(CustomException.DEBUG, null, "calculateSetHeight(): ");//debug**
+		}//if.
+
+		String style_height = this.html_data.height;
+		if(style_height.equals("-1"))
+		{
+			this.height=-1;
+			if(this.getTag().equals("img") && this.image!=null)
+			{
+				this.height=calculateImageDimensions(this.width, this.height)[1];
+				//CustomException.writeLog(CustomException.DEBUG, null, "IMAGE height: "+this.height);//debug**
+			}//if.
+		}//if.
+		else if(style_height.endsWith("%"))
+		{
+			if(this.max_height<=-1)
+			{
+				CustomException.writeLog(CustomException.WARNING, null, "WARNING: "+class_name+".calculateHeight(): Cannot calculate percentage height when parent height is not fixed!");
+				this.height=-1;
+			}//if.
+			double percentage = Double.parseDouble(style_height.replaceAll("%",""));
+			this.height = StaticStuff.roundTo((percentage*this.max_height)/100,3);
+		}//if.
+		else
+		{this.height = Double.parseDouble(style_height);}
+
+		if(this.height!=-1)
+		{
+			this.max_height = this.getMaxHeight();//Called method to ensure 'max_height' has been calculated.
+			if(this.height>this.max_height && this.max_height>0)//'height' can't be greater than 'max_height'.
+			{this.height = this.max_height;}
+
+			//If this is an image then we may need to re-scale it.
+			if(this.getTag().equals("img") && this.image!=null)
+			{calculateImageDimensions(this.width, this.height);}
+		}//if.
+	}//calculateSetHeight().
+
+	protected double[] calculateImageDimensions(double set_width, double set_height)
+	{
+		if(this.image==null)
+		{
+			log.severe(class_name+".calculateImageDimensions(): this.image==null! Cannot calculate height.");
+			return new double[]{0,0};
+		}//if.
+
+		CustomException.writeLog(CustomException.DEBUG, null, class_name+".calculateImageDimensions():");//debug**
+	//	CustomException.writeLog(CustomException.DEBUG, null, " set_width: "+set_width+" set_height: "+set_height);//debug**
+
+		double max_width = this.getMaxWidth();
+		if(set_width>=0 && max_width>=0)
+		{set_width = Math.min(max_width, set_width);}
+		double max_height = this.getMaxHeight();
+		if(set_height>=0 && max_height>=0)
+		{set_height = Math.min(max_height, set_height);}
+
+		set_width = set_width-this.getBorderWidth("l")-this.getPadding("l")-this.getPadding("r")-this.getBorderWidth("r");
+		set_height = set_height-this.getBorderWidth("t")-this.getPadding("t")-this.getPadding("b")-this.getBorderWidth("b");
+
+		CustomException.writeLog(CustomException.DEBUG, null, " set_width: "+set_width+" set_height: "+set_height);//debug**
+
+		double image_width = this.image.getWidth();
+		double image_height = this.image.getHeight();
+
+		CustomException.writeLog(CustomException.DEBUG, null, "image_width: "+image_width+" image_height: "+image_height);//debug**
+
+		double ratio = image_height/image_width;
+
+		CustomException.writeLog(CustomException.DEBUG, null, " ratio: "+ratio);//debug**
+
+		double width_from_height = 0;
+		double height_from_width = 0;
+		
+		if(set_width>0 && set_width<image_width)
+		{
+			image_width=set_width;
+			height_from_width = StaticStuff.roundDownTo(ratio*set_width,3);
+			image_height=Math.min(image_height, height_from_width);
+		}//if.
+
+		if(set_height>0 && set_height<image_height)
+		{
+			image_height=set_height;
+			width_from_height = StaticStuff.roundDownTo(set_height/ratio,3);
+			image_width=Math.min(image_width, width_from_height);
+		}//if.
+
+		CustomException.writeLog(CustomException.DEBUG, null, "width_from_height: "+width_from_height+" height_from_width: "+height_from_width);//debug**
+
+	/*	if(set_height>0 && height_from_width>set_height)
+		{
+			image_width = width_from_height;
+			image_height = set_height;
+		}//if.
+		else if(set_width>0 && width_from_height>set_width)
+		{
+			image_width = set_width;
+			image_height = height_from_width;
+		}//else if.*/
+
+		image_width+=this.getBorderWidth("l")+this.getPadding("l")+this.getPadding("r")+this.getBorderWidth("r");
+		image_height+=this.getBorderWidth("t")+this.getPadding("t")+this.getPadding("b")+this.getBorderWidth("b");
+
+		if(this.width>=0 && image_width<this.width)
+		{this.width=image_width;}
+		if(this.height>=0 && image_height<this.height)
+		{this.height=image_height;}
+
+		CustomException.writeLog(CustomException.DEBUG, null, " this.width: "+this.width+" this.height: "+this.height);//debug**
+
+		return new double[] {image_width, image_height};
+	}//calculateImageDimensions().
+
 
 	protected double getMaxPossibleChildWidth()
 	{
-		//System.out.println("getMaxPossibleChildWidth():");//debug**
-		//System.out.println(" this.width="+this.width);//debug**
+		//CustomException.writeLog(CustomException.DEBUG, null, "getMaxPossibleChildWidth():");//debug**
+		//CustomException.writeLog(CustomException.DEBUG, null, " this.width="+this.width);//debug**
 		double internal_width=this.width;
 		if(internal_width==-1)//'auto'
 		{internal_width=this.max_width;}
@@ -400,8 +528,8 @@ public class PDFElementProperties
 	{
 		if(this.width==-1)
 		{
-			System.out.println("getExternalWidth(): matched_sequence: "+this.html_data.matched_sequence);//debug**
-			System.out.println("SEVERE: "+class_name+".getExternalWidth(): this element's width has not been calculated yet!");
+			CustomException.writeLog(CustomException.DEBUG, null, "getExternalWidth(): matched_sequence: "+this.html_data.matched_sequence);//debug**
+			CustomException.writeLog(CustomException.SEVERE, null, class_name+".getExternalWidth(): this element's width has not been calculated yet!");
 			return -1;
 		}//if.
 
@@ -410,12 +538,12 @@ public class PDFElementProperties
 
 	protected double getExternalHeight()
 	{
-		//System.out.println("getExternalHeight(): ");//debug**
-		//System.out.println(" matched_sequence: "+this.html_data.matched_sequence);//debug**
+		//CustomException.writeLog(CustomException.DEBUG, null, "getExternalHeight(): ");//debug**
+		//CustomException.writeLog(CustomException.DEBUG, null, " matched_sequence: "+this.html_data.matched_sequence);//debug**
 
 		if(this.height==-1)
 		{
-			System.out.println("SEVERE: "+class_name+".getExternalHeight(): this element's height has not been calculated yet!");
+			CustomException.writeLog(CustomException.SEVERE, null, class_name+".getExternalHeight(): this element's height has not been calculated yet!");
 			return -1;
 		}//if.
 
@@ -441,32 +569,34 @@ public class PDFElementProperties
 		{return;}
 
 		this.is_closed=true;
-		//System.out.println("\n\ncloseTag(): matched_sequence="+this.html_data.matched_sequence);//debug**
+		//CustomException.writeLog(CustomException.DEBUG, null, "\n\ncloseTag(): matched_sequence="+this.html_data.matched_sequence);//debug**
 
 		if(this.getTag().equals("temptext"))
 		{return;}
 
 		calculateAutoWidth();
-		calculateHeight();
-		//System.out.println(this.printRelativeLocationData());//debug**
+		calculateAutoHeight();
+		//CustomException.writeLog(CustomException.DEBUG, null, this.printRelativeLocationData());//debug**
 	}//closeTag().
 
 	protected void calculateAutoWidth()
 	{
+	//	CustomException.writeLog(CustomException.DEBUG, null, class_name+".calculateAutoWidth():");//debug**
+
 		//This next section is for working out auto-width.
 		if(!this.is_closed)//Can't calculate 'auto' width until we know what's inside this element.
 		{
-			System.out.println("SEVERE: "+class_name+".calculateAutoWidth(): method called before element was closed!");
+	//		CustomException.writeLog(CustomException.DEBUG, null, "SEVERE: "+class_name+".calculateAutoWidth(): method called before element was closed!");
 			return;
 		}//if.
 
-		//System.out.println(" children.size(): "+this.children.size());//debug**
+	//	CustomException.writeLog(CustomException.DEBUG, null, " children.size(): "+this.children.size());//debug**
 		if(this.children.size()>0)
 		{
 			placeChildren();
 
 			double max_row_width = this.greatest_width+this.getBorderWidth("l")+this.getPadding("l",this.greatest_width)+this.getPadding("r",this.greatest_width)+this.getBorderWidth("r");
-			//System.out.println(" max_row_width: "+max_row_width);//debug**
+			//CustomException.writeLog(CustomException.DEBUG, null, " max_row_width: "+max_row_width);//debug**
 			if(this.width==-1)//Finalise 'auto' width.
 			{
 				this.width = max_row_width;
@@ -474,32 +604,40 @@ public class PDFElementProperties
 				if(this.width>this.max_width && this.max_width>0)//'width' can't be greater than 'max_width'.
 				{this.width = this.max_width;}
 			}//if.
-	//		System.out.println(" calculated width: "+this.width);//debug**
+	//		CustomException.writeLog(CustomException.DEBUG, null, " calculated width: "+this.width);//debug**
 		}//if.
 		else if(this.width==-1 && this.text_string==null)
 		{
 			this.width=0;
-			System.out.println("Warning: "+class_name+".calculateAutoWidth(): has no children. Will be removed.");
+			CustomException.writeLog(CustomException.WARNING, null, class_name+".calculateAutoWidth(): has no children. Will be removed.");
 		}//else.
 
 		width_calculated=true;
 	}//calculateAutoWidth().
 	protected void placeChildren()
 	{
-		System.out.println("\nplaceChildren(): ");//debug**
-		System.out.println(" this.width: "+this.width);//debug**
-		this.internal_width = getMaxPossibleChildWidth();
+	//	if(!this.getTag().contains("text"))
+	//	{
+	//		System.out.println();//debug**
+	//		CustomException.writeLog(CustomException.DEBUG, null, "placeChildren(): ");//debug**
+	//	}//if.
+		this.internal_width = StaticStuff.roundTo(getMaxPossibleChildWidth(),3);
 		this.row_top = 0.0;
 		this.row_rightmost_left = 0.0;
 		this.row_leftmost_right = internal_width;
 		this.row_lowest_bottom = 0.0;//Keep track of the lowest bottom edge for this row. Defines entire row size.
+
+	//	if(!this.getTag().contains("text"))
+	//	{
+	//		CustomException.writeLog(CustomException.DEBUG, null, " this.internal_width: "+this.internal_width);//debug**
+	//	}//if.
 
 
 		for(PDFElementProperties child: this.children)
 		{
 			if(child.width==0 || child.height==0)
 			{
-				//System.out.println(" child has width: "+child.width+" height: "+child.height+" therefore won't show up so not placing it..");
+				//CustomException.writeLog(CustomException.DEBUG, null, " child has width: "+child.width+" height: "+child.height+" therefore won't show up so not placing it..");
 				continue;
 			}//if.
 
@@ -510,10 +648,13 @@ public class PDFElementProperties
 
 				StringBuilder text_line = new StringBuilder();
 				double existing_line_length = text_left_margin;
+				double max_line_length = Math.max(this.width,0);//In case this.width==-1 (auto).
 				for(String[] word_data: temptext_element.text_words)
 				{
 					double max_text_width = this.row_leftmost_right-this.row_rightmost_left;
-					//System.out.println("max_text_width="+max_text_width);//debug**
+					//CustomException.writeLog(CustomException.DEBUG, null, "max_text_width="+max_text_width);//debug**
+
+					//CustomException.writeLog(CustomException.DEBUG, null, " white_space:"+this.html_data.white_space);//debug**
 
 					String word = word_data[0];
 					double word_length = Double.parseDouble(word_data[1]);
@@ -522,7 +663,7 @@ public class PDFElementProperties
 					{
 						existing_line_length += word_length;
 						text_line.append(word_data[0]);
-						//System.out.println("text_line="+text_line.toString());//debug**
+						//CustomException.writeLog(CustomException.DEBUG, null, "text_line="+text_line.toString());//debug**
 						continue;
 					}//if.
 
@@ -531,7 +672,7 @@ public class PDFElementProperties
 					{
 						try
 						{
-							PDFElementProperties text_element = createInternalTextElement(temptext_element, text_line.toString(), (existing_line_length-text_left_margin), line_height);
+							PDFElementProperties text_element = createInternalTextElement(temptext_element, text_line.toString(), (existing_line_length-text_left_margin), max_line_length, line_height);
 							text_element.closeTag();
 							placeChild(text_element);
 						}//try.
@@ -541,7 +682,14 @@ public class PDFElementProperties
 							ce.writeLog(log);
 						}//catch().
 
-						text_line=new StringBuilder("  "+word);
+						if(this.html_data.white_space.equals("nowrap"))//For now we just hide anything else. So just break out here.
+						{
+							text_line=new StringBuilder();
+							break;
+						}//if.
+
+						text_line=new StringBuilder(word);
+						existing_line_length=word_length;
 						max_text_width=internal_width;
 					}//if.
 					else
@@ -550,7 +698,7 @@ public class PDFElementProperties
 						existing_line_length += word_length;
 					}//else.
 
-					//System.out.println("text_line="+text_line.toString());//debug**
+					//CustomException.writeLog(CustomException.DEBUG, null, "text_line="+text_line.toString());//debug**
 				}//for(word).
 
 				//Append the last line.
@@ -558,7 +706,7 @@ public class PDFElementProperties
 				{
 					try
 					{
-						PDFElementProperties text_element = createInternalTextElement(temptext_element, text_line.toString(), (existing_line_length-text_left_margin), line_height);
+						PDFElementProperties text_element = createInternalTextElement(temptext_element, text_line.toString(), (existing_line_length-text_left_margin), max_line_length, line_height);
 						text_element.closeTag();
 						placeChild(text_element);
 					}//try.
@@ -577,21 +725,40 @@ public class PDFElementProperties
 				double child_external_height = child.getExternalHeight();
 				if(child_external_width<=0 || child_external_height<=0)
 				{
-					System.out.println("Warning: "+class_name+".placeChildren(): child dimensions<=0, width:'"+child_external_width+"', height:'"+child_external_height+"', skipping...");
+					CustomException.writeLog(CustomException.WARNING, null, "Warning: "+class_name+".placeChildren(): child dimensions<=0, width:'"+child_external_width+"', height:'"+child_external_height+"', skipping...");
 					continue;
 				}//if.
 
 				placeChild(child);
 			}//else.
 			
-			//System.out.println("placeChildren(): this.lowest_child_bottom="+this.lowest_child_bottom);//debug**
+			//CustomException.writeLog(CustomException.DEBUG, null, "placeChildren(): this.lowest_child_bottom="+this.lowest_child_bottom);//debug**
 		}//for(child).
 	}//placeChildren().
-	private PDFElementProperties createInternalTextElement(PDFElementProperties text_parent, String text, double line_length, double line_height) throws CustomException
+	private PDFElementProperties createInternalTextElement(PDFElementProperties text_parent, String text, double line_length, double row_length, double line_height) throws CustomException
 	{
 		double margin_bottom = line_height*text_margin_b_fraction;
 		double margin_top = line_height*text_margin_t_fraction;
-		String text_styling = "<text style=\"display:inline-block; float:left; margin-left:"+text_left_margin+"; margin-top:"+margin_top+"; margin-bottom:"+margin_bottom+"; margin-right:"+text_right_margin+"; border:none; width:"+line_length+"; height:"+line_height+"; \" >";
+		double margin_left = text_left_margin;
+
+		String float_side="left";
+		if(text_parent.html_data.text_align.equals("right"))
+		{float_side="right";}
+		else if(text_parent.html_data.text_align.equals("center"))
+		{
+			margin_left+=StaticStuff.roundDownTo((row_length-line_length)/2,3);
+		}//else if.
+
+
+		String text_styling = "<text style=\"display:inline-block;"
+						+" float:"+float_side+";"
+						+" margin-left:"+margin_left+";"
+						+" margin-top:"+margin_top+";"
+						+" margin-bottom:"+margin_bottom+";"
+						+" margin-right:"+text_right_margin+";"
+						+" border:none; width:"+line_length+";"
+						+" height:"+line_height+";"
+						+"\" >";
 		HtmlData text_html_data = new HtmlData(0, 0, text_styling);
 		text_html_data.setParent(text_parent.html_data);
 		PDFElementProperties new_text = new PDFElementProperties(text_parent, text_html_data);
@@ -600,16 +767,23 @@ public class PDFElementProperties
 	}//createInternalTextElement().
 	protected void placeChild(PDFElementProperties child)
 	{
-		System.out.println(" child matched_sequence: "+child.html_data.matched_sequence);//debug**
-		System.out.println(" child.width="+child.width+" child.height="+child.height);//debug**
-		double child_external_width = StaticStuff.roundDownTo(child.getExternalWidth(),2);
-		double child_external_height = StaticStuff.roundDownTo(child.getExternalHeight(),2);
+	//	if(!child.getTag().contains("text"))
+	//	{
+	//		CustomException.writeLog(CustomException.DEBUG, null, " child matched_sequence: "+child.html_data.matched_sequence);//debug**
+	//		//CustomException.writeLog(CustomException.DEBUG, null, " child.width="+child.width+" child.height="+child.height);//debug**
+	//	}//if.
+		double child_external_width = StaticStuff.roundDownTo(child.getExternalWidth(),3);
+		double child_external_height = StaticStuff.roundDownTo(child.getExternalHeight(),3);
 
 		String child_float_side = child.getFloatSide();
 
-		System.out.println(class_name+" row_rightmost_left: "+row_rightmost_left);//debug**
-		System.out.println(class_name+" row_leftmost_right: "+row_leftmost_right);//debug**
-		System.out.println(class_name+" child_external_width: "+child_external_width);//debug**
+	//	if(!child.getTag().contains("text"))
+	//	{
+	//		CustomException.writeLog(CustomException.DEBUG, null, " row_rightmost_left: "+row_rightmost_left);//debug**
+	//		CustomException.writeLog(CustomException.DEBUG, null, " row_leftmost_right: "+row_leftmost_right);//debug**
+	//		CustomException.writeLog(CustomException.DEBUG, null, " child_external_width: "+child_external_width);//debug**
+	//		CustomException.writeLog(CustomException.DEBUG, null, " child_float_side: "+child.getFloatSide());//debug**
+	//	}//if.
 
 		if(child_float_side.startsWith("r"))
 		{
@@ -637,20 +811,21 @@ public class PDFElementProperties
 				child.calculateBottom();
 				this.lowest_child_bottom=Math.max(this.lowest_child_bottom, child.bottom+child.getMargin("b"));
 			}//else.
+		//	CustomException.writeLog(CustomException.DEBUG, null, " child.left: "+child.left+" child.right: "+child.right);//debug**
 		}//if.
 		else //if(child_float_side.startsWith("l")). Float=left is the default.
 		{
 			//start a new row.
 			if((child_external_width+this.row_rightmost_left)>this.row_leftmost_right)
 			{
-				System.out.println(" cew+rrl="+(child_external_width+this.row_rightmost_left)+" rlr="+this.row_leftmost_right);//debug**
+			//	CustomException.writeLog(CustomException.DEBUG, null, " cew+rrl="+(child_external_width+this.row_rightmost_left)+" rlr="+this.row_leftmost_right);//debug**
 				child.top=this.lowest_child_bottom+child.getMargin("t");
 				child.left=0+child.getMargin("l");
 				child.calculateRight();
 				child.calculateBottom();
 
 				this.greatest_width=Math.max(this.greatest_width, this.row_rightmost_left);
-				//System.out.println(" left child new row. greatest_width: "+this.greatest_width);//debug**
+				//CustomException.writeLog(CustomException.DEBUG, null, " left child new row. greatest_width: "+this.greatest_width);//debug**
 
 				this.row_top=this.lowest_child_bottom;
 				this.row_rightmost_left = child_external_width;
@@ -659,110 +834,66 @@ public class PDFElementProperties
 			}//if.
 			else//Just add to existing row.
 			{					
-				child.top=this.row_top;
+				child.top=this.row_top+child.getMargin("t");
 				child.left=this.row_rightmost_left+child.getMargin("l");
 				this.row_rightmost_left += child_external_width;
 				this.greatest_width=Math.max(this.greatest_width, this.row_rightmost_left);
-				//System.out.println(" left child. greatest_width: "+this.greatest_width);//debug**
+				//CustomException.writeLog(CustomException.DEBUG, null, " left child. greatest_width: "+this.greatest_width);//debug**
 				child.calculateRight();
 				child.calculateBottom();
 				this.lowest_child_bottom=Math.max(this.lowest_child_bottom, child.bottom+child.getMargin("b"));
 			}//else.
 		}//else.
+		this.row_rightmost_left=StaticStuff.roundDownTo(this.row_rightmost_left,3);
+		this.row_leftmost_right=StaticStuff.roundTo(this.row_leftmost_right,3);
+	//	CustomException.writeLog(CustomException.DEBUG, null, " child.top");//debug**
 	}//placeChild().
 
-	protected double calculateImageHeight()
+	protected void calculateAutoHeight()
 	{
-		if(this.image==null)
-		{
-			log.severe(class_name+".calculateImageHeight(): this.image==null! Cannot calculate height.");
-			return 0;
-		}//if.
-
-		double image_width = this.image.getWidth();
-		double image_height = this.image.getHeight();
-
-		double ratio = image_height/image_width;
-
-		double placed_image_width = this.width-this.getBorderWidth("l")-this.getPadding("l")-this.getPadding("r")-this.getBorderWidth("r");
-		placed_image_width = StaticStuff.roundDownTo(placed_image_width,2);
-
-		double placed_image_height = StaticStuff.roundDownTo(ratio*placed_image_width, 2);
-
-		return placed_image_height;
-
-	}//calculateImageHeight().
-
-	protected void calculateHeight()
-	{
-		//System.out.println("\ncalculateHeight(): ");//debug**
-		//System.out.println(" matched_sequence: "+this.html_data.matched_sequence);//debug**
-		//System.out.println(" html_data.height: "+this.html_data.height);//debug**
-
-		String style_height = this.html_data.height;
-		if(style_height.equals("-1"))
-		{
-			this.height=-1;
-			if(this.getTag().equals("img") && this.image!=null)
-			{
-				this.height=calculateImageHeight();
-				//System.out.println("IMAGE height: "+this.height);//debug**
-			}//if.
-		}//if.
-		else if(style_height.endsWith("%"))
-		{
-			if(this.max_height<=-1)
-			{
-				System.out.println("WARNING: "+class_name+".calculateHeight(): Cannot calculate percentage height when parent height is not fixed!");
-				this.height=-1;
-			}//if.
-			double percentage = Double.parseDouble(style_height.replaceAll("%",""));
-			this.height = (percentage*this.max_height)/100;
-		}//if.
-		else
-		{this.height = Double.parseDouble(style_height);}
+	//	if(this.getTag().equals("img"))
+	//	{	
+	//		CustomException.writeLog(CustomException.DEBUG, null, "\ncalculateAutoHeight(): ");//debug**
+			//CustomException.writeLog(CustomException.DEBUG, null, " matched_sequence: "+this.html_data.matched_sequence);//debug**
+	//		CustomException.writeLog(CustomException.DEBUG, null, " html_data.height: "+this.html_data.height);//debug**
+	//		CustomException.writeLog(CustomException.DEBUG, null, " this.height: "+this.height);//debug**
+	//	}//if.
 
 		if(this.height!=-1)
-		{
-			this.height = this.height;
-			this.max_height = this.getMaxHeight();//Called method to ensure 'max_height' has been calculated.
-			if(this.height>this.max_height && this.max_height>0)//'height' can't be greater than 'max_height'.
-			{this.height = this.max_height;}
-			return;
-		}//if.
+		{return;}
 
 		//This next section is for working out auto-height.
 		if(!this.is_closed)//Can't calculate 'auto' height until we know what's inside this element.
 		{
-			System.out.println("Warning: "+class_name+".calculateHeight(): method called before element was closed!");
+			CustomException.writeLog(CustomException.WARNING, null, "Warning: "+class_name+".calculateAutoHeight(): method called before element was closed!");
 			return;
 		}//if.
 
-		//System.out.println(" lowest_child_bottom: "+this.lowest_child_bottom);//debug**
+		//CustomException.writeLog(CustomException.DEBUG, null, " lowest_child_bottom: "+this.lowest_child_bottom);//debug**
 
 		double max_column_height = this.lowest_child_bottom+this.getBorderWidth("t")+this.getPadding("t")+this.getPadding("b")+this.getBorderWidth("b");
-		//System.out.println(" this.max_height: "+this.max_height+" max_column_height: "+max_column_height);//debug**
+		//CustomException.writeLog(CustomException.DEBUG, null, " this.max_height: "+this.max_height+" max_column_height: "+max_column_height);//debug**
 		if(max_column_height>this.max_height && this.max_height>0)
 		{this.height=this.max_height;}
 		else
 		{this.height=max_column_height;}
 
-		//System.out.println(" height: "+this.height);//debug**
+		//CustomException.writeLog(CustomException.DEBUG, null, " height: "+this.height);//debug**
 
 		//Global var
 		internal_elements_height = Math.max(internal_elements_height, this.getExternalHeight());
-	}//calculateHeight().
+	}//calculateAutoHeight().
 
 	protected void calculateRight()
 	{
 		if(this.left<=-1)
 		{
-			System.out.println("SEVERE: "+class_name+".calculateRight(): this.left not set yet!");
+			CustomException.writeLog(CustomException.SEVERE, null, "SEVERE: "+class_name+".calculateRight(): this.left not set yet!");
 			return;
 		}//if.
 		if(this.width<=-1)
 		{
-			System.out.println("SEVERE: "+class_name+".calculateRight(): this.width not set yet!");
+			CustomException.writeLog(CustomException.SEVERE, null, "SEVERE: "+class_name+".calculateRight(): this.width not set yet!");
 			return;
 		}//if.
 
@@ -773,48 +904,58 @@ public class PDFElementProperties
 	{
 		if(this.top<=-1)
 		{
-			System.out.println("SEVERE: "+class_name+".calculateBottom(): this.top not set yet!");
+			CustomException.writeLog(CustomException.SEVERE, null, "SEVERE: "+class_name+".calculateBottom(): this.top not set yet!");
 			return;
 		}//if.
 		if(this.height<=-1)
 		{
-			System.out.println("SEVERE: "+class_name+".calculateBottom(): this.height not set yet!");
+			CustomException.writeLog(CustomException.SEVERE, null, "SEVERE: "+class_name+".calculateBottom(): this.height not set yet!");
 			return;
 		}//if.
 
 		this.bottom = this.top+this.height;//+this.getPadding("t")+this.getPadding("b");
-	//	System.out.println("calculateBottom(): matched_sequence="+this.html_data.matched_sequence);//debug**
-	//	System.out.println("calculateBottom(): ");//debug**
-	//	System.out.println(" location data: \n"+this.printRelativeLocationData());//debug**
+	//	CustomException.writeLog(CustomException.DEBUG, null, "calculateBottom(): matched_sequence="+this.html_data.matched_sequence);//debug**
+	//	CustomException.writeLog(CustomException.DEBUG, null, "calculateBottom(): ");//debug**
+	//	CustomException.writeLog(CustomException.DEBUG, null, " location data: \n"+this.printRelativeLocationData());//debug**
 	}//calculateBottom().
 
 	private void readImage(String image_src) throws CustomException
 	{
 		if(this.image!=null)
 		{
-			System.out.println("Warning: "+class_name+".readImage(): this.image already defined, not overwriting.");
+			CustomException.writeLog(CustomException.WARNING, null, class_name+".readImage(): this.image already defined, not overwriting.");
 			return;
 		}//if.
 
-		if(this.image!=null)
-		{throw new CustomException(CustomException.SEVERE, class_name, "Cannot set 'image' when 'text' is already defined.", "Trying to set image.");}
+		if(this.text_elements.size()>0)
+		{
+			CustomException.writeLog(CustomException.SEVERE, null , class_name+" cannot set 'image' when 'text' is already defined.");
+			return;
+		}
 
 		if(image_src==null || image_src.trim().isEmpty())
-		{throw new CustomException(CustomException.WARNING, class_name+".readImage()","Image src is not defined!", "Trying to read image");}
+		{
+			CustomException.writeLog(CustomException.WARNING, null, class_name+".readImage(): Image src is not defined!");
+			return;
+		}//if.
 		
 		if(image_src.startsWith("http"))
 		{
 			try
 			{this.image = ImageIO.read(new URL(image_src));}
 			catch(IOException ioe)
-			{throw new CustomException(CustomException.SEVERE, class_name, "Trying to read image from URL", ioe);}
+			{
+				CustomException.writeLog(CustomException.SEVERE, null, class_name+" trying to read image from URL:\n"+ioe);
+			}//catch().
 		}//if.
 		else
 		{
 			try
 			{this.image = ImageIO.read(new File(image_src));}
 			catch(IOException ioe)
-			{throw new CustomException(CustomException.SEVERE, class_name, "Trying to read image from File", ioe);}
+			{
+				CustomException.writeLog(CustomException.SEVERE, null, class_name+" trying to read image from File:\n"+ioe);
+			}//catch().
 		}//else.
 
 	}//readImage().
@@ -825,14 +966,15 @@ public class PDFElementProperties
 		{throw new CustomException(CustomException.SEVERE, class_name, "Cannot set 'text' when 'image' is already defined.", "Trying to set text.");}
 		
 		if(this.text_elements.size()>0)
-		{System.out.println("Warning: "+class_name+" 'text' is already defined, overwriting...");}
+		{CustomException.writeLog(CustomException.WARNING, null, "Warning: "+class_name+" 'text' is already defined, overwriting...");}
 
 		if(words.length<=0)
 		{return;}
 
-		//System.out.println(class_name+".setText(): words="+Arrays.deepToString(words));//debug**
+		//CustomException.writeLog(CustomException.DEBUG, null, class_name+".setText(): words="+Arrays.deepToString(words));//debug**
+		//CustomException.writeLog(CustomException.DEBUG, null, class_name+".setText(): this.html_data.white_space: "+this.html_data.white_space);//debug**
 
-		String temptext_styling = "<temptext style=\"display:inline-block; float:left; margin:none; border:none;\" >";	
+		String temptext_styling = "<temptext style=\"display:inline-block; float:left; margin:none; border:none; text-align:"+this.html_data.text_align+"; white-space:"+this.html_data.white_space+";\" >";	
 		HtmlData temptext_html_data = new HtmlData(0, 0, temptext_styling);
 		temptext_html_data.setParent(this.html_data);
 
@@ -858,7 +1000,7 @@ public class PDFElementProperties
 		else if(child_element.getFloatSide().equals("right"))
 		{this.right_children_elements.add(child_element);}
 		else
-		{System.out.println("Warning: "+class_name+".addChild(): Failed to add child!");return;}*/
+		{CustomException.writeLog(CustomException.WARNING, null, "Warning: "+class_name+".addChild(): Failed to add child!");return;}*/
 		if(child_element.getPosition().equals("fixed"))
 		{this.fixed_children_elements.add(child_element);}
 		else
@@ -934,7 +1076,7 @@ public class PDFElementProperties
 		else if(side.startsWith("l"))
 		{return this.html_data.border_left_width;}
 		
-		System.out.println("SEVERE: "+class_name+".getBorderWidth(): invalid side '"+side+"'!");
+		CustomException.writeLog(CustomException.SEVERE, null, "SEVERE: "+class_name+".getBorderWidth(): invalid side '"+side+"'!");
 		return 0;
 	}//getBorderWidth().
 
@@ -953,7 +1095,7 @@ public class PDFElementProperties
 		{value =  this.html_data.margin_left;}
 		else
 		{
-			System.out.println("SEVERE: "+class_name+".getMargin(): invalid side '"+side+"'!");
+			CustomException.writeLog(CustomException.SEVERE, null, "SEVERE: "+class_name+".getMargin(): invalid side '"+side+"'!");
 			return 0;
 		}//else.
 
@@ -963,13 +1105,13 @@ public class PDFElementProperties
 			{return Double.parseDouble(value);}
 			if(this.width==-1 && length==null)
 			{
-				System.out.println("SEVERE: "+class_name+".getMargin(): height is not defined! Can't retrieve margin-"+side+"="+value+"!");
+				CustomException.writeLog(CustomException.SEVERE, null, "SEVERE: "+class_name+".getMargin(): height is not defined! Can't retrieve margin-"+side+"="+value+"!");
 				return 0;
 			}//if.
 			if(length==null)
 			{length=this.width;}
 			double percentage = Double.parseDouble(value.replaceAll("%",""));
-			return (length*percentage)/100;
+			return StaticStuff.roundDownTo((length*percentage)/100,3);
 		}//if.
 		else
 		{
@@ -977,13 +1119,13 @@ public class PDFElementProperties
 			{return Double.parseDouble(value);}
 			if(this.width==-1 && length==null)
 			{
-				System.out.println("SEVERE: "+class_name+".getMargin(): width is not defined! Can't retrieve margin-"+side+"="+value+"!");
+				CustomException.writeLog(CustomException.SEVERE, null, "SEVERE: "+class_name+".getMargin(): width is not defined! Can't retrieve margin-"+side+"="+value+"!");
 				return 0;
 			}//if.
 			if(length==null)
 			{length=this.width;}
 			double percentage = Double.parseDouble(value.replaceAll("%",""));
-			return (length*percentage)/100;
+			return StaticStuff.roundDownTo((length*percentage)/100,3);
 		}//else.
 	}//getMargin().
 
@@ -1002,7 +1144,7 @@ public class PDFElementProperties
 		{value =  this.html_data.padding_left;}
 		else
 		{
-			System.out.println("SEVERE: "+class_name+".getMargin(): invalid side '"+side+"'!");
+			CustomException.writeLog(CustomException.SEVERE, null, class_name+".getMargin(): invalid side '"+side+"'!");
 			return 0;
 		}//else.
 
@@ -1012,13 +1154,13 @@ public class PDFElementProperties
 			{return Double.parseDouble(value);}
 			if(this.height==-1 && length==null)
 			{
-				System.out.println("SEVERE: "+class_name+".getMargin(): height is not defined! Can't retrieve padding-"+side+"="+value+"!");
+				CustomException.writeLog(CustomException.SEVERE, null, class_name+".getMargin(): height is not defined! Can't retrieve padding-"+side+"="+value+"!");
 				return 0;
 			}//if.
 			if(length==null)
 			{length=this.height;}
 			double percentage = Double.parseDouble(value.replaceAll("%",""));
-			return (length*percentage)/100;
+			return StaticStuff.roundDownTo((length*percentage)/100,3);
 		}//if.
 		else
 		{
@@ -1026,13 +1168,13 @@ public class PDFElementProperties
 			{return Double.parseDouble(value);}
 			if(this.width==-1 && length==null)
 			{
-				System.out.println("SEVERE: "+class_name+".getMargin(): width is not defined! Can't retrieve padding-"+side+"="+value+"!");
+				CustomException.writeLog(CustomException.SEVERE, null, class_name+".getMargin(): width is not defined! Can't retrieve padding-"+side+"="+value+"!");
 				return 0;
 			}//if.
 			if(length==null)
 			{length=this.width;}
 			double percentage = Double.parseDouble(value.replaceAll("%",""));
-			return (length*percentage)/100;
+			return StaticStuff.roundDownTo((length*percentage)/100,3);
 		}//else.
 	}//getPadding().
 
@@ -1047,7 +1189,7 @@ public class PDFElementProperties
 		else if(side.startsWith("l"))
 		{return this.html_data.border_left_color;}
 
-		System.out.println("SEVERE: "+class_name+".getBorderColor(): invalid side '"+side+"'!");
+		CustomException.writeLog(CustomException.SEVERE, null, class_name+".getBorderColor(): invalid side '"+side+"'!");
 		return Color.BLACK;
 	}//getBorderColor().
 

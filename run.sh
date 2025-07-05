@@ -13,4 +13,4 @@ then
 	exit 1
 fi
 
-java -cp "$jars."  HtmlToPdfConverter $1
+java -cp "$jars."  HtmlToPdfConverter $1 $2

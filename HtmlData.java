@@ -94,6 +94,9 @@ public class HtmlData
 	public double font_size=12.0;
 	public String font_family = "Times-Roman";
 
+	public String text_align = "left";
+	public String white_space= "normal";
+
 	public Color fg_color = Color.BLACK;
 	public Color background_color=Color.WHITE;
 
@@ -150,15 +153,15 @@ public class HtmlData
 			return;
 		}//if.
 
-		//System.out.println(class_name+".setParent(): this.tag="+this.tag);//debug**
-		//System.out.println(class_name+".setParent(): parent="+parent);//debug**
+	//	CustomException.writeLog(CustomException.DEBUG, null, class_name+".setParent(): this.tag="+this.tag);//debug**
+		//CustomException.writeLog(CustomException.DEBUG, null, class_name+".setParent(): parent="+parent);//debug**
 
 		this.parent=parent;
 		//copyParentStyleProperties();
 		extractStyleString();
 		extractStyleProperties();
-		//System.out.println("\n"+class_name+".setParent(): matched_sequence: "+this.matched_sequence);//debug**
-		//System.out.println(" "+this.printStyling());//debug**
+	//	CustomException.writeLog(CustomException.DEBUG, null, class_name+".setParent(): matched_sequence: "+this.matched_sequence);//debug**
+	//	CustomException.writeLog(CustomException.DEBUG, null, " "+this.printStyling());//debug**
 	}//setParent().
 
 	public String getTag()
@@ -267,6 +270,8 @@ public class HtmlData
 
 	//Font
 		extractFontData();
+
+		extractTextProperties();//wrap, alignment.
 
 	//Foreground Color
 		try
@@ -640,7 +645,7 @@ public class HtmlData
 		}//catch().
 
 		try
-		{this.font_family = StaticStuff.findLastMatchWithDefaultValue(this.style_string, "font-family *: *[^;\"]", parent.font_family).trim();}
+		{this.font_family = StaticStuff.findLastMatchWithDefaultValue(this.style_string, "font-family *: *[^;\"]", parent.font_family).replaceAll("font-family *: *","").trim();}
 		catch(CustomException ce)
 		{
 			ce.setCodeDescription("Trying to extract 'font-family' from style_string");
@@ -649,6 +654,38 @@ public class HtmlData
 		}//catch().
 
 	}//extractFontData().
+
+	private void extractTextProperties()
+	{
+	//text-align
+		try
+		{
+			this.text_align = StaticStuff.findLastMatchWithDefaultValue(this.style_string, "text-align *: *[^;\"]+", String.valueOf(parent.text_align)).replaceAll("text-align *: *","").trim();
+			if(this.text_align.isEmpty())
+			{this.text_align=parent.text_align;}
+		}//try.
+		catch(CustomException ce)
+		{
+			ce.setCodeDescription("trying to extract text-align property");
+			ce.writeLog(log);
+			this.text_align=parent.text_align;
+		}//catch().
+
+	////white_space;
+		try
+		{
+			this.white_space = StaticStuff.findLastMatchWithDefaultValue(this.style_string, "white-space *: *[^;\"]+", String.valueOf(parent.white_space)).replaceAll("white-space *: *","").trim();
+			//CustomException.writeLog(CustomException.DEBUG, null, class_name+".extractTextProperties(): this.white_space: "+this.white_space);//debug**
+			if(this.white_space.isEmpty())
+			{this.white_space=parent.white_space;}
+		}//try.
+		catch(CustomException ce)
+		{
+			ce.setCodeDescription("trying to extract white_space property");
+			ce.writeLog(log);
+			this.white_space=parent.white_space;
+		}//catch().
+	}//extractTextProperties().
 
 	public String numbersAndPercent(String input)
 	{

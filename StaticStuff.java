@@ -294,6 +294,22 @@ public class StaticStuff
 		return formatter.format(date);
 	}//getFormattedDate().
 
+
+	public static String printHashMap(HashMap hash_map)
+	{
+		StringBuilder string_rep = new StringBuilder("{");
+		
+		for(Object key: hash_map.keySet())
+		{
+			string_rep.append("\n\t"+key.toString()+": "+hash_map.get(key).toString());
+		}//for(key).
+		string_rep.append("\n}");
+		
+		return string_rep.toString();
+	}//printHashMap().
+
+
+
 	//Example: findFirstMatch("foobar bar foo", "fo+", Pattern.MULTILINE).
 	public static String findFirstMatch(String source, String regex, Integer pattern_option) throws CustomException
 	{
