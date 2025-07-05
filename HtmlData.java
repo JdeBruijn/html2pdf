@@ -61,7 +61,7 @@ public class HtmlData
 	public String position="relative";//'relative' or 'fixed'.
 	public String float_side="left"; //'left' or 'right'.
 
-	public String display="inline-block";//'block' or 'inline-block'.
+	public String display="";//'block' or 'inline-block'.
 
 	public String width="-1";//-1=='auto'.
 	public String max_width="-1";//-1=='auto'.
@@ -154,7 +154,7 @@ public class HtmlData
 		}//if.
 
 	//	CustomException.writeLog(CustomException.DEBUG, null, class_name+".setParent(): this.tag="+this.tag);//debug**
-		//CustomException.writeLog(CustomException.DEBUG, null, class_name+".setParent(): parent="+parent);//debug**
+	//	CustomException.writeLog(CustomException.DEBUG, null, class_name+".setParent(): parent="+parent);//debug**
 
 		this.parent=parent;
 		//copyParentStyleProperties();
@@ -318,7 +318,7 @@ public class HtmlData
 	//Style Position.	
 		String match=parent.position;
 		try
-		{match = StaticStuff.findLastMatch(this.style_string, "position *:[^;]+");}
+		{match = StaticStuff.findLastMatch(this.style_string, "position *:[^;\"]+");}
 		catch(CustomException ce)
 		{
 			ce.setCodeDescription("Trying to extract 'position' from style_string");
@@ -335,43 +335,71 @@ public class HtmlData
 		}//if.
 
 	//Style Float.
-		match=parent.float_side;
+		match="";
 		try
-		{match = StaticStuff.findLastMatch(this.style_string, "float *:[^;]+");}
+		{match = StaticStuff.findLastMatchWithDefaultValue(this.style_string, "float *:[^;\"]+","").replaceAll("float *: *","").trim();}
 		catch(CustomException ce)
 		{
 			ce.setCodeDescription("Trying to get 'float' from style_string");
 			ce.writeLog(log);
+			match="";
 		}//catch().
 
-		if(match!=null && match.contains("right"))
-		{this.float_side="right";}
+		if(!match.isEmpty())
+		{
+			match=match.toLowerCase();
+			if(match.equals("inherit"))
+			{match=this.parent.float_side;}
+
+			if(match.equals("right"))
+			{
+				this.float_side="right";
+				this.display="inline-block";
+			}//if.
+			else if(match.equals("left"))
+			{
+				this.float_side="left";
+				this.display="inline-block";
+			}//else if.
+			else 
+			{
+				this.float_side="left";
+				this.display="block";
+			}//else.
+		}//if.
 		else
-		{this.float_side="left";}
+		{
+			this.float_side="left";
+			this.display="block";
+		}//else.
 
 	}//extractStylePositionAndFloat().
 
 	private void extractStyleDisplay()
 	{
-		String match=parent.display;
+		if(!this.display.equals(""))//Already set in 'extractStylePositionAndFloat()' method.
+		{return;}
+
+		String match="";
 		try
-		{match = StaticStuff.findLastMatch(this.style_string, "display *:[^;]+");}
+		{match = StaticStuff.findLastMatchWithDefaultValue(this.style_string, "display *:[^;\"]+","").replaceAll("display *: *","").trim();}
 		catch(CustomException ce)
 		{
 			ce.setCodeDescription("Trying to extract 'display' from style_string");
 			ce.writeLog(log);
 		}//catch().
 
-		//If 'float' is defined then 'display' must automatically be 'inline-block'.
-		// This is how it works in browsers so best to mimic what they do.
-		if(this.style_string.contains("float *:"))
+		if(!match.isEmpty())
 		{
-			this.display="inline-block";
-			return;
-		}//if.
+			match=match.toLowerCase();
+			if(match.equals("inherit"))
+			{match=parent.display;}
 
-		if(match!=null && match.contains("inline-block"))
-		{this.display="inline-block";}
+			if(match.equals("inline-block"))
+			{this.display="inline-block";}
+			else
+			{this.display="block";}
+		}//if.
 		else
 		{this.display="block";}
 

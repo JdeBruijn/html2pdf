@@ -62,7 +62,7 @@ public class HtmlToPdfConverter
 
 		if(args.length>=2)//css file specified
 		{
-		//	CustomException.log_level=CustomException.DEBUG;
+	//		CustomException.log_level=CustomException.DEBUG;
 
 			System.out.println("Inlining css...");//debug**
 			String css_path = args[1];
@@ -77,7 +77,7 @@ public class HtmlToPdfConverter
 		String[][] custom_font_files = new String[][] {{"Open Sans","open-sans.regular.ttf"}};
 		HashMap<String, BaseFont> custom_fonts = loadFonts(custom_font_files);
 
-		CustomException.log_level=CustomException.DEBUG;
+	//	CustomException.log_level=CustomException.DEBUG;
 		LinkedList<PDFElementProperties> flattened_elements = new LinkedList<PDFElementProperties>();
 		try
 		{

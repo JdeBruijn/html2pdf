@@ -88,8 +88,9 @@ public class PDFElementProperties
 
 	public double lowest_child_bottom=0; //Keeps track of the lowest bottom edge of the children.
 	public double greatest_width=0; //Keeps track of the widest row of children.
-	
 
+	public PDFElementProperties previous_child=null; //Required since some styling is influenced by previous elements (like display=block).
+	
 //Dimensions.
 	//'width' is used to define how the 'box' is drawn, not the space for internal elements.
 	// Use 'getMaxPossibleChildWidth()' for the space for internal elements.
@@ -330,13 +331,13 @@ public class PDFElementProperties
 		if(this.width_calculated)
 		{return;}
 
-		if(this.getTag().equals("img"))
-		{
-			CustomException.writeLog(CustomException.DEBUG, null, "calculateSetWidth(): ");//debug**
+	//	if(this.getTag().equals("img"))
+	//	{
+	//		CustomException.writeLog(CustomException.DEBUG, null, "calculateSetWidth(): ");//debug**
 	//		CustomException.writeLog(CustomException.DEBUG, null, " matched_sequence: "+this.html_data.matched_sequence);//debug**
 	//		CustomException.writeLog(CustomException.DEBUG, null, " style_width: "+this.html_data.width);//debug**
 	//		CustomException.writeLog(CustomException.DEBUG, null, " html_data: "+html_data.printStyling());//debug**
-		}//if.
+	//	}//if.
 
 		String style_width = this.html_data.width;
 
@@ -381,10 +382,10 @@ public class PDFElementProperties
 
 	protected void calculateSetHeight()
 	{
-		if(this.getTag().equals("img"))
-		{
-			CustomException.writeLog(CustomException.DEBUG, null, "calculateSetHeight(): ");//debug**
-		}//if.
+	//	if(this.getTag().equals("img"))
+	//	{
+	//		CustomException.writeLog(CustomException.DEBUG, null, "calculateSetHeight(): ");//debug**
+	//	}//if.
 
 		String style_height = this.html_data.height;
 		if(style_height.equals("-1"))
@@ -429,7 +430,7 @@ public class PDFElementProperties
 			return new double[]{0,0};
 		}//if.
 
-		CustomException.writeLog(CustomException.DEBUG, null, class_name+".calculateImageDimensions():");//debug**
+	//	CustomException.writeLog(CustomException.DEBUG, null, class_name+".calculateImageDimensions():");//debug**
 	//	CustomException.writeLog(CustomException.DEBUG, null, " set_width: "+set_width+" set_height: "+set_height);//debug**
 
 		double max_width = this.getMaxWidth();
@@ -442,16 +443,16 @@ public class PDFElementProperties
 		set_width = set_width-this.getBorderWidth("l")-this.getPadding("l")-this.getPadding("r")-this.getBorderWidth("r");
 		set_height = set_height-this.getBorderWidth("t")-this.getPadding("t")-this.getPadding("b")-this.getBorderWidth("b");
 
-		CustomException.writeLog(CustomException.DEBUG, null, " set_width: "+set_width+" set_height: "+set_height);//debug**
+	//	CustomException.writeLog(CustomException.DEBUG, null, " set_width: "+set_width+" set_height: "+set_height);//debug**
 
 		double image_width = this.image.getWidth();
 		double image_height = this.image.getHeight();
 
-		CustomException.writeLog(CustomException.DEBUG, null, "image_width: "+image_width+" image_height: "+image_height);//debug**
+	//	CustomException.writeLog(CustomException.DEBUG, null, "image_width: "+image_width+" image_height: "+image_height);//debug**
 
 		double ratio = image_height/image_width;
 
-		CustomException.writeLog(CustomException.DEBUG, null, " ratio: "+ratio);//debug**
+	//	CustomException.writeLog(CustomException.DEBUG, null, " ratio: "+ratio);//debug**
 
 		double width_from_height = 0;
 		double height_from_width = 0;
@@ -470,18 +471,7 @@ public class PDFElementProperties
 			image_width=Math.min(image_width, width_from_height);
 		}//if.
 
-		CustomException.writeLog(CustomException.DEBUG, null, "width_from_height: "+width_from_height+" height_from_width: "+height_from_width);//debug**
-
-	/*	if(set_height>0 && height_from_width>set_height)
-		{
-			image_width = width_from_height;
-			image_height = set_height;
-		}//if.
-		else if(set_width>0 && width_from_height>set_width)
-		{
-			image_width = set_width;
-			image_height = height_from_width;
-		}//else if.*/
+	//	CustomException.writeLog(CustomException.DEBUG, null, "width_from_height: "+width_from_height+" height_from_width: "+height_from_width);//debug**
 
 		image_width+=this.getBorderWidth("l")+this.getPadding("l")+this.getPadding("r")+this.getBorderWidth("r");
 		image_height+=this.getBorderWidth("t")+this.getPadding("t")+this.getPadding("b")+this.getBorderWidth("b");
@@ -491,7 +481,7 @@ public class PDFElementProperties
 		if(this.height>=0 && image_height<this.height)
 		{this.height=image_height;}
 
-		CustomException.writeLog(CustomException.DEBUG, null, " this.width: "+this.width+" this.height: "+this.height);//debug**
+	//	CustomException.writeLog(CustomException.DEBUG, null, " this.width: "+this.width+" this.height: "+this.height);//debug**
 
 		return new double[] {image_width, image_height};
 	}//calculateImageDimensions().
@@ -790,7 +780,7 @@ public class PDFElementProperties
 			this.greatest_width=Math.max(this.greatest_width, this.internal_width);//If any child is float=right parent is automatically max width.
 			
 			//start a new row.
-			if((this.row_leftmost_right-child_external_width)<this.row_rightmost_left)
+			if((this.row_leftmost_right-child_external_width)<this.row_rightmost_left || (this.previous_child!=null && this.previous_child.getDisplay().equals("block")))
 			{
 				child.top=this.lowest_child_bottom+child.getMargin("t");
 				child.left=this.internal_width-child.width;
@@ -816,7 +806,7 @@ public class PDFElementProperties
 		else //if(child_float_side.startsWith("l")). Float=left is the default.
 		{
 			//start a new row.
-			if((child_external_width+this.row_rightmost_left)>this.row_leftmost_right)
+			if((child_external_width+this.row_rightmost_left)>this.row_leftmost_right || child.getDisplay().equals("block") || (this.previous_child!=null && this.previous_child.getDisplay().equals("block")))
 			{
 			//	CustomException.writeLog(CustomException.DEBUG, null, " cew+rrl="+(child_external_width+this.row_rightmost_left)+" rlr="+this.row_leftmost_right);//debug**
 				child.top=this.lowest_child_bottom+child.getMargin("t");
@@ -846,6 +836,7 @@ public class PDFElementProperties
 		}//else.
 		this.row_rightmost_left=StaticStuff.roundDownTo(this.row_rightmost_left,3);
 		this.row_leftmost_right=StaticStuff.roundTo(this.row_leftmost_right,3);
+		this.previous_child=child;
 	//	CustomException.writeLog(CustomException.DEBUG, null, " child.top");//debug**
 	}//placeChild().
 
