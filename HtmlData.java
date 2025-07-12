@@ -34,6 +34,14 @@ public class HtmlData
 		put("yellow", Color.YELLOW);
 	}};
 
+	HashMap<String, Integer> font_weights_map = new HashMap<String, Integer>()
+	{{
+		put("lighter",400);
+		put("normal",400);
+		put("bold",700);
+		put("bolder",700);
+	}};
+
 
 
 
@@ -93,6 +101,8 @@ public class HtmlData
 
 	public double font_size=12.0;
 	public String font_family = "Times-Roman";
+	public int font_weight = 400;
+	public String text_decoration = "";
 
 	public String text_align = "left";
 	public String white_space= "normal";
@@ -115,6 +125,71 @@ public class HtmlData
 		{extractSrc();}
 		//System.out.println(class_name+".constructor(): this:"+this.toString());//debug**
 	}//constructor().
+
+	public HtmlData(int start, int end, HtmlData html_data, String sequence)
+	{
+		this.start_index=start;
+		this.end_index=end;
+
+		copyStyleProperties(html_data);
+
+		this.matched_sequence=sequence;
+
+
+		extractTag();
+		checkIsOpening();
+		if(tag.equals("a"))
+		{extractHref();}
+		else if(tag.equals("img"))
+		{extractSrc();}
+		//System.out.println(class_name+".constructor(): this:"+this.toString());//debug**
+	}//copy constructor().
+
+	private void copyStyleProperties(HtmlData html_data)
+	{
+		this.position = html_data.position;
+		this.float_side = html_data.float_side;
+		this.display = html_data.display;
+
+		this.width = html_data.width;
+		this.max_width = html_data.max_width;
+		this.min_width = html_data.min_width;
+		this.height = html_data.height;
+		this.max_height = html_data.max_height;
+		this.min_height = html_data.min_height;
+
+		this.border_top_width = html_data.border_top_width;
+		this.border_right_width = html_data.border_right_width;
+		this.border_bottom_width = html_data.border_bottom_width;
+		this.border_left_width = html_data.border_left_width;
+		this.border_top_color = html_data.border_top_color;
+		this.border_right_color = html_data.border_right_color;
+		this.border_bottom_color = html_data.border_bottom_color;
+		this.border_left_color = html_data.border_left_color;
+
+		this.margins = html_data.margins;
+		this.margin_top = html_data.margin_top;
+		this.margin_right = html_data.margin_right;
+		this.margin_bottom = html_data.margin_bottom;
+		this.margin_left = html_data.margin_left;
+
+		this.paddings = html_data.paddings;
+		this.padding_top = html_data.padding_top;
+		this.padding_right = html_data.padding_right;
+		this.padding_bottom = html_data.padding_bottom;
+		this.padding_left = html_data.padding_left;
+
+		this.font_size = html_data.font_size;
+		this.font_family = html_data.font_family;
+		this.font_weight = html_data.font_weight;
+		this.text_decoration = html_data.text_decoration;
+
+		this.text_align = html_data.text_align;
+		this.white_space= html_data.white_space;
+
+		this.fg_color = html_data.fg_color;
+		this.background_color = html_data.background_color;
+	}//copyStyleProperties()
 
 	private void extractTag()
 	{
@@ -153,15 +228,15 @@ public class HtmlData
 			return;
 		}//if.
 
-	//	CustomException.writeLog(CustomException.DEBUG, null, class_name+".setParent(): this.tag="+this.tag);//debug**
-	//	CustomException.writeLog(CustomException.DEBUG, null, class_name+".setParent(): parent="+parent);//debug**
+	//	CustomException.debug(class_name+".setParent(): this.tag="+this.tag);//debug**
+	//	CustomException.debug(class_name+".setParent(): parent="+parent);//debug**
 
 		this.parent=parent;
 		//copyParentStyleProperties();
 		extractStyleString();
 		extractStyleProperties();
-	//	CustomException.writeLog(CustomException.DEBUG, null, class_name+".setParent(): matched_sequence: "+this.matched_sequence);//debug**
-	//	CustomException.writeLog(CustomException.DEBUG, null, " "+this.printStyling());//debug**
+	//	CustomException.debug(class_name+".setParent(): matched_sequence: "+this.matched_sequence);//debug**
+	//	CustomException.debug(" "+this.printStyling());//debug**
 	}//setParent().
 
 	public String getTag()
@@ -184,41 +259,6 @@ public class HtmlData
 		if(style_match!="")
 		{this.style_string = style_match.replaceAll("style *= *|\"","").replaceAll("\n"," ");}
 	}//extractStyleString().
-
-/*	This is a bad implementation. Built the same idea into 'extractStyleProperties()' and associated sub-methods.
-	private void copyParentStyleProperties()
-	{
-		this.width = parent.width;
-		this.max_width = parent.max_width;
-		this.min_width = parent.min_width;
-		this.height = parent.height;
-		this.max_height = parent.max_height;
-		this.min_height = parent.min_height;
-
-		this.border_top_width = parent.border_top_width;
-		this.border_right_width = parent.border_right_width;
-		this.border_bottom_width = parent.border_bottom_width;
-		this.border_left_width = parent.border_left_width;
-		this.border_top_color = parent.border_top_color;
-		this.border_right_color = parent.border_right_color;
-		this.border_bottom_color = parent.border_bottom_color;
-		this.border_left_color = parent.border_left_color;
-
-		this.background_color = parent.background_color;
-
-		this.margin_top = parent.margin_top;
-		this.margin_right = parent.margin_right;
-		this.margin_bottom = parent.margin_bottom;
-		this.margin_left = parent.margin_left;
-
-		this.padding_top = parent.padding_top;
-		this.padding_right = parent.padding_right;
-		this.padding_bottom = parent.padding_bottom;
-		this.padding_left = parent.padding_left;
-
-		this.font_size = parent.font_size;
-		this.font_family = parent.font_family;
-	}//copyParentStyleProperties() */
 
 	private void extractStyleProperties()
 	{
@@ -276,12 +316,19 @@ public class HtmlData
 	//Foreground Color
 		try
 		{
-			String style_fg_color = StaticStuff.findLastMatch(this.style_string, "^|; *color *:[^;\"]+");
+			String style_fg_color = StaticStuff.findLastMatch(this.style_string, "(^|;)+ *color *: *[^;\"]+");
 			style_fg_color = style_fg_color.replaceAll(".*color *:","");
+			Color default_color = parent.fg_color;
+			if(this.getTag().equals("a"))//link
+			{default_color=Color.BLUE;}
+
+	//		System.out.println();//debug**
+	//		CustomException.debug(class_name+".extractStyleProperties(): matched_sequence: "+this.matched_sequence);//debug**
+	//		CustomException.debug(" style_fg_color: "+style_fg_color+" parent.fg_color: "+parent.fg_color+" default_color: "+default_color);//debug**
 			if(style_fg_color.trim().equals("inherit"))
 			{this.fg_color=parent.fg_color;}
 			else
-			{this.fg_color = extractColor(style_fg_color, parent.fg_color);}
+			{this.fg_color = extractColor(style_fg_color, default_color);}
 		}//try.
 		catch(CustomException ce)
 		{
@@ -289,6 +336,7 @@ public class HtmlData
 			ce.writeLog(log);
 			this.fg_color=parent.fg_color;
 		}//catch().
+	//	CustomException.debug(" final fg_colour: "+this.fg_color.toString());//debug**
 
 	//Background Color
 		try
@@ -655,6 +703,10 @@ public class HtmlData
 
 	private void extractFontData()
 	{
+	//	CustomException.debug(class_name+".extractFontData(): matched_sequence: "+this.matched_sequence);//debug**
+	//	CustomException.debug(" tag: "+this.getTag());//debug**
+
+	//Font Size
 		String font_size_str="";
 		try
 		{
@@ -672,15 +724,91 @@ public class HtmlData
 			this.font_size=parent.font_size;
 		}//catch().
 
+
+	//Text Decoration
+		String decoration="";
 		try
-		{this.font_family = StaticStuff.findLastMatchWithDefaultValue(this.style_string, "font-family *: *[^;\"]", parent.font_family).replaceAll("font-family *: *","").trim();}
+		{
+			decoration = StaticStuff.findLastMatchWithDefaultValue(this.style_string, "text-decoration *: *[^;\"]+","").replaceAll("text-decoration *: *","").trim();
+		}//try.
+		catch(CustomException ce)
+		{
+			ce.setCodeDescription("Trying to extract 'text-decoration' from style_string");
+			ce.writeLog(log);
+			decoration="";
+		}//catch(ce).
+		decoration=decoration.toLowerCase();
+		if(this.text_decoration.isEmpty())
+		{this.text_decoration=decoration;}
+
+		if(this.text_decoration.isEmpty())
+		{
+			if(this.getTag().equals("i") && !this.text_decoration.contains("italic"))//italic
+			{this.text_decoration+=" italic";}
+			if(this.getTag().equals("b") && !this.text_decoration.contains("bold"))//italic
+			{this.text_decoration+=" bold";}
+			if(this.getTag().equals("a") && !this.text_decoration.contains("underline"))//italic
+			{this.text_decoration+=" underline";}
+		}//if.
+	//	CustomException.debug(" text_decoration: "+this.text_decoration);//debug**
+
+
+	//Font Family.
+		try
+		{this.font_family = StaticStuff.findLastMatchWithDefaultValue(this.style_string, "font-family *: *[^;\"]+", parent.font_family).replaceAll("font-family *: *+","").trim();}
 		catch(CustomException ce)
 		{
 			ce.setCodeDescription("Trying to extract 'font-family' from style_string");
 			ce.writeLog(log);
-			this.font_family=parent.font_family;
+		}//catch().
+		if(this.font_family.trim().isEmpty())
+		{this.font_family=parent.font_family;}
+	//	CustomException.debug(" parent.font_family: "+this.parent.font_family);//debug**
+	//	CustomException.debug(" font_family: "+this.font_family);//debug**
+
+
+	//Font Weight.
+		String font_weight_style="";
+		try
+		{font_weight_style = StaticStuff.findLastMatch(this.style_string, "font-weight *: *[^;\"]+").replaceAll("font-weight *: *","");}
+		catch(CustomException ce)
+		{
+			ce.setCodeDescription("Trying to extract 'font-weight' from style_string");
+			ce.writeLog(log);
 		}//catch().
 
+		if(font_weight_style.trim().isEmpty())
+		{
+			if(this.text_decoration.contains("bold"))
+			{this.font_weight=700;}
+			else
+			{this.font_weight=parent.font_weight;}
+			return;
+		}//if.
+
+		font_weight_style = font_weight_style.toLowerCase();
+
+		if(font_weight_style.equals("none"))
+		{
+			this.font_weight=0;
+			return;
+		}//if.
+
+		if(font_weights_map.containsKey(font_weight_style))
+		{
+			this.font_weight = font_weights_map.get(font_weight_style);
+			return;
+		}//if.
+
+		try
+		{
+			this.font_weight = Integer.parseInt(font_weight_style);
+			return;
+		}//try.
+		catch(NumberFormatException nfe)
+		{log.severe(class_name+".extractFontData(): Number Format Exception:\n"+nfe);}
+
+		this.font_weight=parent.font_weight;
 	}//extractFontData().
 
 	private void extractTextProperties()
@@ -703,7 +831,7 @@ public class HtmlData
 		try
 		{
 			this.white_space = StaticStuff.findLastMatchWithDefaultValue(this.style_string, "white-space *: *[^;\"]+", String.valueOf(parent.white_space)).replaceAll("white-space *: *","").trim();
-			//CustomException.writeLog(CustomException.DEBUG, null, class_name+".extractTextProperties(): this.white_space: "+this.white_space);//debug**
+			//CustomException.debug(class_name+".extractTextProperties(): this.white_space: "+this.white_space);//debug**
 			if(this.white_space.isEmpty())
 			{this.white_space=parent.white_space;}
 		}//try.
@@ -733,7 +861,7 @@ public class HtmlData
 
 	private Color extractColor(String colour_str, Color default_colour)
 	{
-	//	System.out.println("extractColor(): colour_str: "+colour_str);//debug**
+
 		if(colour_str==null || colour_str.trim().isEmpty())
 		{return default_colour;}
 
@@ -761,8 +889,6 @@ public class HtmlData
 			log.warning(class_name+".extractColor(): Number Format Exception when trying to get Color from '"+colour_str+"':\n"+nfe);
 			colour =  default_colour;
 		}//catch().
-
-	//	System.out.println(" colour: "+colour.toString());//debug**
 
 		return colour;
 	}//extractColor().
@@ -856,6 +982,7 @@ public class HtmlData
 		styling.append("\n\tpadding_left: "+this.padding_left);
 		styling.append("\n\tfont_size: "+this.font_size);
 		styling.append("\n\tfont_family : "+this.font_family);
+		styling.append("\n\tfg_color: "+this.fg_color);
 		styling.append("\n\tbackground_color: "+this.background_color);
 
 		return styling.toString();

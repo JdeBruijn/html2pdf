@@ -89,6 +89,11 @@ public class CustomException extends Exception
 		writeLog(this.severity, logger, this.toString());
 	}//writeLog().
 
+	public static void debug(String log_string)
+	{
+		writeLog(DEBUG, null, log_string);
+	}//debug().
+
 	public static void writeLog(int severity, Logger logger, String log_string)
 	{
 		if(severity>log_level)

@@ -12,6 +12,7 @@ import java.util.HashMap;
 import java.util.Set;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.LinkedList;
 import java.util.Calendar;
 import java.util.Date;
@@ -155,6 +156,31 @@ public class StaticStuff
     	return result.toString();
 	}//readFile().
 
+	public static List<String> readFileLines(String file_path)
+	{
+		LinkedList<String> file_lines = new LinkedList<String>();
+
+		if(file_path==null || file_path.isEmpty())
+		{return file_lines;}
+
+		try
+		{
+			File file = new File(file_path);
+			Scanner scanner = new Scanner(file);
+			while(scanner.hasNextLine())
+			{
+				file_lines.add(scanner.nextLine());
+			}//while.
+			scanner.close();
+    	}//try.
+    	catch (FileNotFoundException fnfe)
+    	{
+    		log.severe(class_name+" File Not Found Exception while trying to read file lines '"+file_path+"':\n"+fnfe);
+    	}//catch().
+
+    	return file_lines;
+	}//readFileLines().
+
 	public static boolean deleteFile(String file_path)
 	{
 		if(file_path==null || file_path.trim().isEmpty())
@@ -245,10 +271,18 @@ public class StaticStuff
 		return number;
 	}//roundTo().
 
+	public static double roundUpTo(double number, int places)
+	{
+		double multiplier = Math.pow(10, places);
+		number = (int)Math.ceil(number*multiplier);
+		number = number/multiplier;
+		return number;
+	}//roundUpTo().
+
 	public static double roundDownTo(double number, int places)
 	{
 		double multiplier = Math.pow(10, places);
-		number = (int)Math.round(number*multiplier);
+		number = (int)Math.floor(number*multiplier);
 		number = number/multiplier;
 		return number;
 	}//roundDownTo().
@@ -394,7 +428,7 @@ public class StaticStuff
 		{return "";}
 
 		return results.get(results.size()-1);
-	}//findLastMatchWithDefaultValue().
+	}//findLastMatch().
 
 	public static String findLastMatch(String source, String regex) throws CustomException
 	{return findLastMatch(source, regex, null);}

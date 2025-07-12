@@ -2,6 +2,7 @@
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.List;
 import java.util.LinkedList;
 import java.util.HashMap;
 
@@ -46,7 +47,6 @@ public class HtmlToPdfConverter
 
 	private static String[] builtinFonts = new String[] {"Courier","Courier-Bold","Courier-Oblique","Courier-BoldOblique","Helvetica","Helvetica-Bold","Helvetica-Oblique","Helvetica-BoldOblique","Symbol","Times-Roman","Times-Bold","Times-Italic","Times-BoldItalic","ZapfDingbats"};
 
-
 	public static void main(String[] args)
 	{
 		CustomException.log_level=CustomException.INFO;
@@ -74,8 +74,9 @@ public class HtmlToPdfConverter
 
 		PDFElementProperties.setPageSize(global_page_width, global_page_height);
 
-		String[][] custom_font_files = new String[][] {{"Open Sans","open-sans.regular.ttf"}};
-		HashMap<String, BaseFont> custom_fonts = loadFonts(custom_font_files);
+	//	CustomException.log_level=CustomException.DEBUG;
+		HashMap<String, BaseFont> custom_fonts = loadFonts();
+		CustomException.log_level=CustomException.INFO;
 
 	//	CustomException.log_level=CustomException.DEBUG;
 		LinkedList<PDFElementProperties> flattened_elements = new LinkedList<PDFElementProperties>();
@@ -93,7 +94,7 @@ public class HtmlToPdfConverter
 		CustomException.log_level=CustomException.INFO;
 
 
-		//CustomException.log_level=CustomException.DEBUG;
+	//	CustomException.log_level=CustomException.DEBUG;
 		try (OutputStream os = new FileOutputStream(pdf_path))
 		{
 			generatePdf(flattened_elements, os, custom_fonts);
@@ -115,8 +116,10 @@ public class HtmlToPdfConverter
 		}//catch().*/
 	}//main().
 
-	public static HashMap<String, BaseFont> loadFonts(String[][] font_files)
+	public static HashMap<String, BaseFont> loadFonts()
 	{
+		List<String[]> font_files = getFontConfigs();
+
 		HashMap<String, BaseFont> custom_fonts = new HashMap<String, BaseFont>();
 		for(String[] name_and_file: font_files)
 		{
@@ -131,24 +134,53 @@ public class HtmlToPdfConverter
 	}//loadFonts().
 	private static void createBaseFont(String font_file_name, String font_name, HashMap<String, BaseFont> custom_fonts)
 	{
+		CustomException.debug(class_name+".createBaseFont(): ");//debug**
 		String font_encoding=BaseFont.IDENTITY_H;
 		if(font_file_name.equals(font_name))//inbuilt font.
 		{font_encoding=BaseFont.CP1252;};
 		try
 		{
+			CustomException.debug(" creating font '"+font_name+"' from '"+font_file_name+"'...");//debug**
 			BaseFont base_font = BaseFont.createFont(
 	            font_file_name, // e.g., "fonts/Roboto-Regular.ttf"
 	            font_encoding,     // for full Unicode support
 	            BaseFont.EMBEDDED        // embed font in the PDF
 	        );
 	        custom_fonts.put(font_name, base_font);
+	        CustomException.debug(" base_font:"
+	        	+ "\n\tencoding: "+base_font.getEncoding() 
+	        	+ "\n\tfontType: "+base_font.getFontType() 
+	        	+ "\n\tembedded: "+base_font.isEmbedded());//debug**
 		}//try.
 		catch(IOException ioe)
 		{
 			log.severe(class_name+" IO Exception while trying to createBaseFont '"+font_file_name+"':\n"+ioe);
 		}//catch().
 	}//createBaseFont().
+	private static List<String[]> getFontConfigs()
+	{
+		LinkedList<String[]> font_files = new LinkedList<String[]>();
+		List<String> file_lines  = StaticStuff.readFileLines("./fonts.json");
+		if(file_lines==null || file_lines.size()<=0)
+		{return font_files;}
 
+		for(String line: file_lines)
+		{
+			if(line.matches("^ *#.*"))//Comment line.
+			{continue;}
+			else if(!line.contains(":"))//Invalid line.
+			{continue;}
+
+			String[] parts = line.split(":");
+			if(parts.length!=2)
+			{continue;}
+
+			String font_name = parts[0].replaceAll("[\",]+","").trim();
+			String font_file = parts[1].replaceAll("[\"+,]","").trim();
+			font_files.add(new String[]{font_name, font_file});
+		}//for(line).
+		return font_files;
+	}//getFontConfigs().
 
 	public static String readFileToString(String file_path)
 	{
@@ -169,7 +201,7 @@ public class HtmlToPdfConverter
 
 	private static PDFElementProperties readXHTML(String xhtml_string, HashMap<String, BaseFont> custom_fonts) throws CustomException
 	{
-		CustomException.writeLog(CustomException.DEBUG, null, class_name+".readXHTML(): ");//debug**
+		CustomException.debug(class_name+".readXHTML(): ");//debug**
 
 		//Remove <head> since it's not relevant.
 		xhtml_string = Pattern.compile("<head>.*</head>", Pattern.DOTALL).matcher(xhtml_string).replaceAll("");
@@ -190,13 +222,13 @@ public class HtmlToPdfConverter
 			if(matcher.start()<comment_close_index)
 			{continue;}
 
-			//CustomException.writeLog(CustomException.DEBUG, null, " matcher.group(): "+matcher.group());//debug**
+			//CustomException.debug(" matcher.group(): "+matcher.group());//debug**
 
 			if(matcher.group().startsWith("<!--") || matcher.group().contains("<!--"))
 			{
-			//	CustomException.writeLog(CustomException.DEBUG, null, class_name+" comment matcher.group()="+matcher.group());//debug**
+			//	CustomException.debug(class_name+" comment matcher.group()="+matcher.group());//debug**
 				comment_close_index = xhtml_string.indexOf("-->",matcher.start())+3;
-			//	CustomException.writeLog(CustomException.DEBUG, null, class_name+" comment start index="+matcher.start()+" comment close index="+comment_close_index);//debug**
+			//	CustomException.debug(class_name+" comment start index="+matcher.start()+" comment close index="+comment_close_index);//debug**
 				continue;
 			}//if.
 
@@ -282,16 +314,20 @@ public class HtmlToPdfConverter
 		String font_family = parent_element.html_data.font_family;
 		double font_size = parent_element.html_data.font_size;
 
-		BaseFont base_font = null;
-		if(custom_fonts.containsKey(font_family))
-		{base_font=custom_fonts.get(font_family);}
-        else
-        {
+	//	CustomException.log_level=CustomException.DEBUG;
+		BaseFont base_font=null;
+		Font element_font = getElementFont(parent_element, custom_fonts);
+		if(element_font!=null && element_font.getBaseFont()!=null)
+		{base_font = element_font.getBaseFont();}
+		else
+		{
 			try
 			{base_font=BaseFont.createFont();}//default font.
 			catch(IOException ioe)
 			{throw new CustomException(CustomException.SEVERE, class_name+".lookForUnenclosedText()", "Trying to create default font", ioe);}
-		}//else.
+		}//try.
+
+	//	CustomException.log_level=CustomException.INFO;
 
     	String[] text_split = contained_text.trim().replaceAll(" {2,}"," ").split(" ");
     	String[][] text_words = new String[text_split.length][];
@@ -371,20 +407,17 @@ public class HtmlToPdfConverter
 			}//if.
 			else if(tag.equals("text"))
 			{
-				CustomException.writeLog(CustomException.DEBUG, null, " font_size:"+element.getFontSize()+" text:"+element.getText());//debug**
-				BaseFont base_font = BaseFont.createFont();
-				Font default_font = new Font(base_font, (float)element.getFontSize(), Font.NORMAL, element.getColor());
-				if(element.parent.getTag().equals("a"))
+				Font element_font = getElementFont(element, custom_fonts);
+			//	CustomException.debug(" text element parent.tag: "+element.parent.parent.getTag());//debug**
+				if(element.parent.parent.getTag().equals("a"))//'.parent.parent' because 'text' elements are wrapped in a 'temptext' element.
 				{
-					default_font.setStyle(Font.UNDERLINE);
-					default_font.setColor(Color.blue);
-					Anchor link = new Anchor(element.getText(), default_font);
+					Anchor link = new Anchor(element.getText(), element_font);
 					link.setReference(element.parent.getHref());
 					ColumnText.showTextAligned(cb, 0, link, llx, lly, 0);
 				}
 				else
 				{
-					Phrase text_element = new Phrase(element.getText(), default_font);
+					Phrase text_element = new Phrase(element.getText(), element_font);
 					ColumnText.showTextAligned(cb, 0, text_element, llx, lly, 0);}
 			}//else if.
 			else
@@ -408,6 +441,57 @@ public class HtmlToPdfConverter
 		document.close();
 
 	}//generatePdf().
+
+	private static Font getElementFont(PDFElementProperties element, HashMap<String, BaseFont>custom_fonts)
+	{
+		String font_family = element.getFontFamily();
+		String lower_case_family = font_family.toLowerCase();
+		int font_weight = interpretFontWeight(element.getFontWeight());
+		String text_decoration = element.getTextDecoration();
+		boolean italic = text_decoration.contains("italic");
+		if(font_weight>=1 && !lower_case_family.contains("bold") && custom_fonts.containsKey(font_family+"-Bold"))
+		{
+			font_family+="-Bold";
+			font_weight=0;//Might need to change this.
+		}//if.
+		if(italic && !lower_case_family.contains("italic") && custom_fonts.containsKey(font_family+"-Italic"))
+		{
+			font_family+="-Italic";
+			italic=false;//Might need to change this.
+		}//if.
+
+		int font_style=0;
+		if(font_weight>=1 && italic)
+		{font_style+=Font.BOLDITALIC;}
+		else if(font_weight>=1)
+		{font_style+=Font.BOLD;}
+		else if(italic)
+		{font_style+=Font.ITALIC;}
+
+		if(text_decoration.contains("underline"))
+		{font_style+=Font.UNDERLINE;}
+
+	//	CustomException.debug(" text_decoration: "+text_decoration+" color: "+element.getColor()+" style: "+font_style);//debug**
+	//	CustomException.debug(" font_size:"+element.getFontSize()+" font_family: "+font_family+" font_weight: "+font_weight+" text:"+element.getText());//debug**
+
+		BaseFont base_font = null;
+		if(custom_fonts.containsKey(font_family))
+		{
+			base_font = custom_fonts.get(font_family);
+	//		CustomException.debug(" using custom font '"+font_family+"'!");//debug**
+		}//if.
+
+		Font element_font = new Font(base_font, (float)element.getFontSize(), font_style, element.getColor());
+		return element_font;
+	}//getElementFont().
+
+	private static int interpretFontWeight(int css_weight)
+	{
+		if(css_weight>=700)
+		{return Font.BOLD;}
+
+		return Font.NORMAL;
+	}//interpretFontWeight().
 
 	private static void flattenElements(LinkedList<PDFElementProperties> flattened_elements, PDFElementProperties base_element)
 	{

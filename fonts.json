@@ -1,0 +1,19 @@
+#Format: "FontName":"font/file/path.ttf"
+# "FontName" must match how it appears in the html.
+# If you define a base FontName (eg: OpenSans) and then define bold and italic
+#  versions with the format: OpenSans-Bold, OpenSans-Italic, etc..
+#  then those fonts will automatically be chosen for bold and italic text.
+
+{
+	"OpenSans": "fonts/open-sans.regular.ttf",
+
+	"LiberationSerif": "fonts/LiberationSerif-Regular.ttf",
+	"LiberationSerif-Bold": "fonts/LiberationSerif-Bold.ttf",
+	"LiberationSerif-Italic": "fonts/LiberationSerif-Italic.ttf",
+	"LiberationSerif-Bold-Italic": "fonts/LiberationSerif-BoldItalic.ttf",
+
+	"LiberationSans": "fonts/LiberationSans-Regular.ttf",
+	"LiberationSans-Bold": "fonts/LiberationSans-Bold.ttf",
+	"LiberationSans-Italic": "fonts/LiberationSans-Italic.ttf",
+	"LiberationSans-Bold-Italic": "fonts/LiberationSans-BoldItalic.ttf"
+}
