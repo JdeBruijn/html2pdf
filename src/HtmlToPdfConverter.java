@@ -49,7 +49,7 @@ public class HtmlToPdfConverter
 
 	public static void main(String[] args)
 	{
-		CustomException.log_level=CustomException.INFO;
+		CustomException.log_level=CustomException.DEBUG;
 
 		if(args.length<=0 || args[0]==null || args[0].trim().length()<=0)
 		{
@@ -59,6 +59,10 @@ public class HtmlToPdfConverter
 		String xhtml_path = args[0];
 		String pdf_path = xhtml_path.replaceAll("\\.x?html",".pdf");
 		String xhtml_string = readFileToString(xhtml_path);
+
+		PDFElementProperties.base_path=getBasePath(xhtml_path);//Used for finding location of things like images.
+		CustomException.debug(class_name+".main(): base_path: "+PDFElementProperties.base_path);//debug**
+		CustomException.log_level=CustomException.INFO;
 
 		if(args.length>=2)//css file specified
 		{
@@ -115,6 +119,14 @@ public class HtmlToPdfConverter
 			System.out.println("SEVERE: "+class_name+"IO Exception while trying to generate PDF:\n"+ioe);
 		}//catch().*/
 	}//main().
+
+	public static String getBasePath(String file_path)
+	{
+		if(!file_path.contains("/"))
+		{return "./";}
+
+		return file_path.replaceAll("/[^/]+\\.x?html","/");//
+	}//getBasePath().
 
 	public static HashMap<String, BaseFont> loadFonts()
 	{

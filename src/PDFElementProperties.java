@@ -54,6 +54,8 @@ public class PDFElementProperties
 	public static double getPageHeight()
 	{return page_height;}
 
+	public static String base_path="./";
+
 
 
 //OBJECT
@@ -942,8 +944,9 @@ public class PDFElementProperties
 		}//if.
 		else
 		{
+			image_src = image_src.replaceAll("^\\./","");
 			try
-			{this.image = ImageIO.read(new File(image_src));}
+			{this.image = ImageIO.read(new File(base_path+image_src));}
 			catch(IOException ioe)
 			{
 				CustomException.writeLog(CustomException.SEVERE, null, class_name+" trying to read image from File:\n"+ioe);
