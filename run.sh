@@ -1,5 +1,5 @@
 
-rm -f HtmlToPdfConverter.class
+rm -f *.class
 
 jars="$(find -iname "*.jar" | tr '\n' ':' | sed 's/\.\///g')"
 

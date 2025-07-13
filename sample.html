@@ -1,26 +1,180 @@
 <!DOCTYPE html>
 <html>
-
 <head>
 	<link rel="stylesheet" type="text/css" href="sample.css">
 </head>
-
-<body style="font-size:10px; max-width: 842px; font-family: LiberationSerif;">
+	
+<body style="font-size:10px; max-width: 842px;">
 	<div id="main_container" class="basic">
 
-		<div class="basic info_row" style="padding: 0 3px; margin: 10px 0px 2px 0px;">
+		<div id="ref_and_logo_row" class="basic" style="width:100%; margin:0 0 0 0;">
+
+			<div id="ref_container" class="basic" style="width:30%; margin-top: 20px;">
+				<div id="ref_row1" class="basic" style="width:100%;">
+					<div class="basic" style="width:50%;">DATE</div>
+					<div class="basic" style="width:50%;">02-07-2025 18:47</div>
+				</div>
+				<div id="ref_row2" class="basic" style="width:100%;">
+					<div class="basic" style="width:50%;">REF</div>
+					<div class="basic" style="width:50%;">ABC_DEF_123</div>
+				</div>
+				<div id="ref_row3" class="basic" style="width:100%;">
+					<div class="basic" style="width:50%;">USER</div>
+					<div class="basic" style="width:50%;">Billy</div>
+				</div>
+			</div>
+
+			<img class="basic" style="float:right; max-width: 60%; height:100px; margin-bottom:15px;" src="./company_logo.png" />
+		</div>
+
+		<div id="job_type_title" class="basic section_title" style="background: black; padding: 13px 10px; margin:0 0 1% 0;">QUOTE</div>
+
+		<div id="general_info_row" class="basic" style="width:100%; margin:0 0 0 0;">
+
+			<div id="store_info" class="basic info_container">
+				<div class="basic section_title" >STORE INFO</div>
+				<div class="basic info_box" style="min-height:156px;">
+					<div class="basic info_row" >
+						<div class="basic info_label">NAME</div>
+						<div class="basic info_value info_text">Food Lovers Market</div>
+					</div>
+					<div class="basic info_row">
+						<div class="basic info_label">STREET</div>
+						<div class="basic info_value info_text">Lunar Rover Way</div>
+					</div>
+					<div class="basic info_row">
+						<div class="basic info_label">SUBURB</div>
+						<div class="basic info_value info_text"></div>
+					</div>
+					<div class="basic info_row">
+						<div class="basic info_label">CITY/TOWN</div>
+						<div class="basic info_value info_text">Sea Of Tranquility</div>
+					</div>
+					<div class="basic info_row">
+						<div class="basic info_label">TEL</div>
+						<a class="basic info_value" style="text-decoration: underline; color:blue;" href="tel:+263772123457">+263772123457</a>
+					</div>
+					<div class="basic info_row">
+						<div class="basic info_label">EMAIL</div>
+						<a class="basic info_value" href="mailto:orders@email.com">orders@email.com</a>
+					</div>
+				</div>
+			</div>
+
+			<div id="job_info" class="basic info_container">
+				<div class="basic section_title" >QUOTE INFO</div>
+				<div class="basic info_box" style="min-height:156px;">
+					<div class="basic info_row">
+						<div class="basic info_label">QUOTE EMAILS</div>
+						<div class="basic info_value">
+							<a class="basic" href="mailto:fake1@gmail.com" target="_blank">fake1@gmail.com</a>
+							<a class="basic" href="mailto:fake@email.com" target="_blank">fake@email.com</a>
+						</div>
+					</div>
+					<div class="basic info_row">
+						<div class="basic info_label">MANAGER</div>
+						<div class="basic info_value info_text">Bob</div>
+					</div>
+					<img class="basic" style="width:100%; max-height:55px;" alt="No image found" src="sample_image.png" />
+				</div>
+			</div>
+
+			<div id="company_info" class="basic info_container">
+				<div class="basic section_title">COMPANY</div>
+				<div class="basic info_box" style="min-height:156px;">
+					<div class="basic info_row">
+						<div class="basic info_label">NAME</div>
+						<div class="basic info_value info_text">Cool Company Name</div>
+					</div>
+					<div class="basic info_row">
+						<div class="basic info_label">STREET</div>
+						<div class="basic info_value info_text"></div>
+					</div>
+					<div class="basic info_row">
+						<div class="basic info_label">SUBURB</div>
+						<div class="basic info_value info_text"></div>
+					</div>
+					<div class="basic info_row">
+						<div class="basic info_label">CITY/TOWN</div>
+						<div class="basic info_value info_text"></div>
+					</div>
+					<div class="basic info_row">
+						<div class="basic info_label">TEL</div>
+						<a class="basic info_value" style="text-decoration: underline; color:blue;" href="tel:+263772123456">+263772123456</a>
+					</div>
+					<div class="basic info_row">
+						<div class="basic info_label">EMAIL</div>
+						<a class="basic info_value" href="mailto:fake2@emails.com">fake2@emails.com</a>
+					</div>
+				</div>
+			</div>
+			
+		</div>
+
+		<div id="job_cats_title" class="basic section_title" style="margin:10px 0 0 0;">JOB CATEGORY</div>
+		<div class="basic info_box" style="min-height:34px; padding:1% 0.5% 0.5% 1%; margin:0 0 5px 0;"></div>
+
+		<div id="data_table" class="basic" style="width:100%;">
+			<div class="basic table_row table_header_row">
+				<div class="basic table_cell" style="width:4%; min-height: 30px;">#</div>
+				<div class="basic table_cell" style="width:20%; min-height: 30px;">PRODUCT CODE</div>
+				<div class="basic table_cell" style="width:50%; min-height: 30px;">PRODUCT</div>
+				<div class="basic table_cell" style="width:10%; min-height: 30px;">QUOTED QUANTITY</div>
+				<div class="basic table_cell" style="width:16%; min-height: 30px;">TOTAL PRICE</div>
+			</div>
+			<div class="basic table_row">
+				<div class="basic table_cell" style="width:4%;">1</div>
+				<div class="basic table_cell" style="width:20%;">PROD015</div>
+				<div class="basic table_cell" style="width:50%;white-space: nowrap;">Black Label Can 500dm - Each X 1</div>
+				<div class="basic table_cell" style="width:10%;">12</div>
+				<div class="basic table_cell" style="width:16%;">MK13.80</div>
+			</div>
+			<div class="basic table_row">
+				<div class="basic table_cell" style="width:4%;">2</div>
+				<div class="basic table_cell" style="width:20%;">PROD014</div>
+				<div class="basic table_cell" style="width:50%;white-space: nowrap;">Amstel Lite Cancan 440dm - Each X 6</div>
+				<div class="basic table_cell" style="width:10%;">11</div>
+				<div class="basic table_cell" style="width:16%;">MK18.98</div>
+			</div>
+			<div class="basic table_row">
+				<div class="basic table_cell" style="width:4%;">3</div>
+				<div class="basic table_cell" style="width:20%;">PRO*D001</div>
+				<div class="basic table_cell" style="width:50%;white-space: nowrap;">Proton Choc-Chip - unit X 3</div>
+				<div class="basic table_cell" style="width:10%;">9</div>
+				<div class="basic table_cell" style="width:16%;">MK9.00</div>
+			</div>
+			<div class="basic table_row">
+				<div class="basic table_cell" style="width:84%; text-align:right; padding-right: 50px;">Total</div>
+				<div class="basic table_cell" style="width:16%; color:#df453b;">MK41.77</div>
+			</div>
+		</div>
+
+		<div class="basic info_row" style="padding: 0 3px; margin-top:10px;">
 			<div class="basic">
-				<div class="basic" >TOTAL LINE QUOTED:</div>
+				<div class="basic">TOTAL LINE QUOTED:</div>
 				<div class="basic" style="margin-left:5px;">3</div>
 			</div>
 			<div class="basic" style="float:right;">
-				<div class="basic" >TOTAL WEIGHT:</div>
+				<div class="basic">TOTAL WEIGHT:</div>
 				<div class="basic" style="margin-left:5px;">0.000</div>
 			</div>
 		</div>
 
+		<div class="basic info_row" style="padding: 0 3px; margin-top:10px;">
+			<div class="basic">
+				<div class="basic">JOB CATEGORY:</div>
+				<div class="basic" style="margin-left:5px;">3</div>
+			</div>
+			<div class="basic" style="float:right;">
+				<div class="basic">TOTAL VOLUME:</div>
+				<div class="basic" style="margin-left:5px;">0.000</div>
+			</div>
+		</div>
+
+		<div class="basic section_title" >NOTE</div>
+		<div class="basic info_box" style="padding: 10px 0 5px 10px">quote comment</div>
+
+
 	</div>
-
 </body>
-
 </html>
