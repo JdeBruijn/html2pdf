@@ -70,7 +70,7 @@ public class HtmlToPdfConverter
 
 			System.out.println("Inlining css...");//debug**
 			String css_path = args[1];
-			CSSInliner css_inliner = new CSSInliner(css_path);
+			CssInliner css_inliner = new CssInliner(css_path);
 			xhtml_string = css_inliner.inline(xhtml_string);
 
 			CustomException.log_level=CustomException.INFO;

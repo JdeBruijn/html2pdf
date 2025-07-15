@@ -40,9 +40,9 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.Arrays;
 
-public class CSSInliner
+public class CssInliner
 {
-	private static final String class_name = "JonsCSSInliner";
+	private static final String class_name = "CssInliner";
 	private static final Logger log = Logger.getLogger(class_name);
 
 	private HashMap<String, CssObject> css_tags = new HashMap<String, CssObject>();
@@ -52,7 +52,7 @@ public class CSSInliner
 
 	private CssObject inline_styling = null;//This gets reset for each HTML element.
 
-	public CSSInliner(String css_filename)
+	public CssInliner(String css_filename)
 	{
 		CustomException.writeLog(CustomException.DEBUG, null, class_name+".constructor():");//debug**
 
@@ -313,4 +313,4 @@ public class CSSInliner
 		return result;
 	}//findFirstMatch();
 
-}//class JonsCSSInliner().
+}//class CssInliner().
