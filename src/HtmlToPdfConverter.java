@@ -84,7 +84,7 @@ public class HtmlToPdfConverter
 		HashMap<String, BaseFont> custom_fonts = loadFonts();
 		CustomException.log_level=CustomException.INFO;
 
-		CustomException.log_level=CustomException.DEBUG;
+	//	CustomException.log_level=CustomException.DEBUG;
 		LinkedList<PDFElementProperties> flattened_elements = new LinkedList<PDFElementProperties>();
 		try
 		{

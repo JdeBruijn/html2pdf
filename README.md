@@ -78,8 +78,16 @@ linux (or maybe MacOS? I haven't tried).
 
 ### Tables
 Only supports 'table-layout: fixed;'
-The main limitation is it doesn't handle Tables. I don't like html tables, I think they're more
-hassel than they're worth so I don't use them.
+Column width is set by the first row of the table.
+'Relative' widthing NOT supported. ie: percentage widths must add up to 100% to fit correctly.
+If widths of first row cells not set then the cells will shrink to fit the contents and all cells
+ in the column will have the same width.
+Default borders:
+ table: 'top' and 'left' set to '1px solid black'
+ row: 'bottom' set to '1px solid black'
+ cell: 'left' set to '1px solid black'
+Can be overriden by specifically setting borders on table, row, cells to something else.
+
 
 ### Default tag styling
 The second biggest limitation is probably that I haven't baked in the default styling of most html
