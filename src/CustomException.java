@@ -57,7 +57,6 @@ public class CustomException extends Exception
 	{
 		this.code_description=description;
 	}//setCodeDescription().
-
 	
 	public String getErrorSummary()
 	{

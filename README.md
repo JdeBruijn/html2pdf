@@ -77,6 +77,7 @@ linux (or maybe MacOS? I haven't tried).
 ## Limitations
 
 ### Tables
+Only supports 'table-layout: fixed;'
 The main limitation is it doesn't handle Tables. I don't like html tables, I think they're more
 hassel than they're worth so I don't use them.
 

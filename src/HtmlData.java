@@ -362,6 +362,14 @@ public class HtmlData
 
 	private void extractStylePositionAndFloat()
 	{
+		//Table elements
+		if(this.getTag().equals("tr") || this.getTag().equals("th") || this.getTag().equals("td"))
+		{
+			this.position="relative";
+			this.float_side="left";
+			return;
+		}//if.
+
 
 	//Style Position.	
 		String match=parent.position;
@@ -427,6 +435,17 @@ public class HtmlData
 	{
 		if(!this.display.equals(""))//Already set in 'extractStylePositionAndFloat()' method.
 		{return;}
+
+		if(this.getTag().equals("tr"))
+		{
+			this.display="block";
+			return;
+		}//if.
+		else if(this.getTag().equals("th") || this.getTag().equals("td"))
+		{
+			this.display="inline-block";
+			return;
+		}//if.
 
 		String match="";
 		try
@@ -502,13 +521,19 @@ public class HtmlData
 
 	private void extractBorderData()
 	{
-		String[] all_borders_data = extractBorderDataHelper("","0");
+	//	CustomException.debug("\nextractBorderData(): this.tag: "+this.getTag());
+
+		String[] all_borders_data = extractBorderDataHelper("","0");//debug**
 
 		//Turns out border data is not normally automatically inherited.
 		String[] top_border_data = extractBorderDataHelper("-top", String.valueOf(parent.border_top_width));
+	//	CustomException.debug(" top_border_data: "+Arrays.toString(top_border_data));//debug**
 		String[] right_border_data = extractBorderDataHelper("-right", String.valueOf(parent.border_right_width));
+	//	CustomException.debug(" right_border_data: "+Arrays.toString(right_border_data));//debug**
 		String[] bottom_border_data = extractBorderDataHelper("-bottom", String.valueOf(parent.border_bottom_width));
+	//	CustomException.debug(" bottom_border_data: "+Arrays.toString(bottom_border_data));//debug**
 		String[] left_border_data = extractBorderDataHelper("-left", String.valueOf(parent.border_left_width));
+	//	CustomException.debug(" left_border_data: "+Arrays.toString(left_border_data));//debug**
 
 		if(!all_borders_data[0].equals("0"))//'0' means no value was found when looking for 'border:'. 'none' means 'border:' was explicitly set to 'none' or '0'.
 		{
@@ -538,7 +563,12 @@ public class HtmlData
 	private String[] extractBorderDataHelper(String side, String parent_value)
 	{
 		//border_values format: ["width(eg 1px)","style(eg solid)", "color(eg black)"]
+
 		String[] border_values = new String[] {"0", "solid", "black"};
+		//If this is a table element: check to see if borders are missing and set defaults if they are.
+		if(this.getTag().equals("table") || this.getTag().equals("tr") || this.getTag().equals("th") || this.getTag().equals("td"))
+		{border_values = getTableDefaultBorders(side);}
+
 		String match_value="";
 		try
 		{match_value = StaticStuff.findLastMatch(this.style_string, "border"+side+" *:[^;\"]+").replaceAll("border"+side+" *:","").trim();}
@@ -579,9 +609,34 @@ public class HtmlData
 		return border_values;
 	}//extractBorderDataHelper().
 
+	private String[] getTableDefaultBorders(String side)
+	{
+	//	CustomException.debug(" getTableDefaultBorders(): side: "+side);
+		if(this.getTag().equals("table") && (side.endsWith("top") || side.endsWith("left")))
+		{return new String[] {"1", "solid", "black"};}
+
+		if(this.getTag().equals("tr") && side.endsWith("bottom"))
+		{return new String[] {"1", "solid", "black"};}
+
+		if((this.getTag().equals("th") || this.getTag().equals("td")) && side.endsWith("right"))
+		{return new String[] {"1", "solid", "black"};}
+
+		return new String[] {"0", "solid", "black"};		
+	}//getTableDefaultBorders().
+
 	private void extractMargins()
 	{
 		//System.out.println("\nextractMargins(): matched_sequence:"+this.matched_sequence);//debug**
+
+		//Table cells currently don't support margins.	
+		if(this.getTag().equals("th") || this.getTag().equals("td"))
+		{
+			this.margin_top = "0";
+			this.margin_right = "0";
+			this.margin_bottom = "0";
+			this.margin_left = "0";
+			return;
+		}//if.
 
 		//this.margins = extractStyleDimension("margin", "0", parent.margins, "none");
 		String style_all_margins="";

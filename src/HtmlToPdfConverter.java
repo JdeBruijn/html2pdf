@@ -42,8 +42,8 @@ public class HtmlToPdfConverter
 	//A4 Width = 595.0
 	//A4 height = 842.0
 	//Landscape mode:
-	private static double global_page_width=842;
-	private static double global_page_height=595;
+	private static final double global_page_width=842;
+	private static final double global_page_height=595;
 
 	private static String[] builtinFonts = new String[] {"Courier","Courier-Bold","Courier-Oblique","Courier-BoldOblique","Helvetica","Helvetica-Bold","Helvetica-Oblique","Helvetica-BoldOblique","Symbol","Times-Roman","Times-Bold","Times-Italic","Times-BoldItalic","ZapfDingbats"};
 
@@ -60,8 +60,10 @@ public class HtmlToPdfConverter
 		String pdf_path = xhtml_path.replaceAll("\\.x?html",".pdf");
 		String xhtml_string = readFileToString(xhtml_path);
 
-		PDFElementProperties.base_path=getBasePath(xhtml_path);//Used for finding location of things like images.
-		CustomException.debug(class_name+".main(): base_path: "+PDFElementProperties.base_path);//debug**
+		PdfDocVars doc_vars = new PdfDocVars();
+
+		doc_vars.base_path=getBasePath(xhtml_path);//Used for finding location of things like images.
+		CustomException.debug(class_name+".main(): base_path: "+doc_vars.base_path);//debug**
 		CustomException.log_level=CustomException.INFO;
 
 		if(args.length>=2)//css file specified
@@ -76,17 +78,17 @@ public class HtmlToPdfConverter
 			CustomException.log_level=CustomException.INFO;
 		}//if.
 
-		PDFElementProperties.setPageSize(global_page_width, global_page_height);
+		doc_vars.setPageSize(global_page_width, global_page_height);
 
 	//	CustomException.log_level=CustomException.DEBUG;
 		HashMap<String, BaseFont> custom_fonts = loadFonts();
 		CustomException.log_level=CustomException.INFO;
 
-	//	CustomException.log_level=CustomException.DEBUG;
+		CustomException.log_level=CustomException.DEBUG;
 		LinkedList<PDFElementProperties> flattened_elements = new LinkedList<PDFElementProperties>();
 		try
 		{
-			PDFElementProperties top_element=readXHTML(xhtml_string, custom_fonts);
+			PDFElementProperties top_element=readXHTML(xhtml_string, custom_fonts, doc_vars);
 			flattenElements(flattened_elements, top_element);
 		}//try.
 		catch(CustomException ce)
@@ -101,7 +103,7 @@ public class HtmlToPdfConverter
 	//	CustomException.log_level=CustomException.DEBUG;
 		try (OutputStream os = new FileOutputStream(pdf_path))
 		{
-			generatePdf(flattened_elements, os, custom_fonts);
+			generatePdf(flattened_elements, os, custom_fonts, doc_vars);
 		}//try.
 		catch(IOException ioe)
 		{
@@ -211,7 +213,7 @@ public class HtmlToPdfConverter
 	}//readFileToString().
 
 
-	private static PDFElementProperties readXHTML(String xhtml_string, HashMap<String, BaseFont> custom_fonts) throws CustomException
+	private static PDFElementProperties readXHTML(String xhtml_string, HashMap<String, BaseFont> custom_fonts, PdfDocVars doc_vars) throws CustomException
 	{
 		CustomException.debug(class_name+".readXHTML(): ");//debug**
 
@@ -270,7 +272,7 @@ public class HtmlToPdfConverter
 				//System.out.println("current_match.parent: "+current_match.parent);//debug**
 				//System.out.println("opening match styling: "+current_match.printStyling());//debug**
 
-				PDFElementProperties current_element = new PDFElementProperties(parent_element, current_match);
+				PDFElementProperties current_element = new PDFElementProperties(doc_vars, parent_element, current_match);
 
 				
 				if(current_match.opening_and_closing)
@@ -367,10 +369,10 @@ public class HtmlToPdfConverter
 		}//catch().
 	}//lookForUnenclosedText().
 
-	private static void generatePdf(LinkedList<PDFElementProperties> flattened_elements, OutputStream pdf_output_stream, HashMap<String, BaseFont>custom_fonts) throws IOException
+	private static void generatePdf(LinkedList<PDFElementProperties> flattened_elements, OutputStream pdf_output_stream, HashMap<String, BaseFont>custom_fonts, PdfDocVars doc_vars) throws IOException
 	{
-		float page_width = (float)PDFElementProperties.getPageWidth();
-		float page_height = (float)PDFElementProperties.getPageHeight();
+		float page_width = (float)doc_vars.getPageWidth();
+		float page_height = (float)doc_vars.getPageHeight();
 
 		CustomException.writeLog(CustomException.INFO, null, class_name+".generatePdf(): page_width:"+page_width+" page_height:"+page_height);//INFO
 		//Font font1 = FontFactory.getFont("Helvetica", 8, Font.BOLD, Color.BLACK);
