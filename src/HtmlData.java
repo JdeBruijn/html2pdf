@@ -110,6 +110,9 @@ public class HtmlData
 	public Color fg_color = Color.BLACK;
 	public Color background_color=Color.WHITE;
 
+	//Tables
+	public int colspan=1;
+
 
 	public HtmlData(int start, int end, String sequence)
 	{
@@ -235,6 +238,9 @@ public class HtmlData
 		//copyParentStyleProperties();
 		extractStyleString();
 		extractStyleProperties();
+
+		if(this.getTag().equals("th") || this.getTag().equals("td"))
+		{extractColspan();}
 	//	CustomException.debug(class_name+".setParent(): matched_sequence: "+this.matched_sequence);//debug**
 	//	CustomException.debug(" "+this.printStyling());//debug**
 	}//setParent().
@@ -897,6 +903,26 @@ public class HtmlData
 			this.white_space=parent.white_space;
 		}//catch().
 	}//extractTextProperties().
+
+	//Table cells only. 'colspan' is and attribute that specifies how many 'columns-to-span'.
+	private void extractColspan()
+	{
+		try
+		{
+			String colspan_str = StaticStuff.findLastMatch(this.matched_sequence, "colspan *= *\" *[0-9]+\" *");
+			if(colspan_str!=null && !colspan_str.trim().isEmpty())
+			{
+				int colspan_int = Integer.parseInt(StaticStuff.findFirstMatch(colspan_str, "[0-9]+"));
+				if(colspan_int>0)
+				{this.colspan=colspan_int;}
+			}//if.
+		}//try.
+		catch(CustomException ce)
+		{
+			ce.setCodeDescription("Trying to extractColspan");
+			ce.writeLog(log);
+		}//catch().
+	}//extractColspan().
 
 	public String numbersAndPercent(String input)
 	{

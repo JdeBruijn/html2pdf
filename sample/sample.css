@@ -72,20 +72,23 @@
 	width:100%;
 	margin-top:20px;
 	border-top:1px solid black;
-	border_left:1px solid black;
-	font-family:'Open Sans',sans-serif;
+	border-left:1px solid black;
+	border-collapse: collapse;
+    table-layout: fixed;
+    box-sizing: border-box;
 }
 .table_row
 {
 	width:100%;
 	border-bottom:1px solid black;
-	border-left:1px solid black;
 	font-size: 12px;
+	box-sizing: border-box;
 }
 .table_header_row
 {
 	font-weight: bold;
 	font-size: 10px;
+	box-sizing: border-box;
 }
 .table_cell
 {
@@ -93,6 +96,7 @@
 	padding:4px 0 4px 0;
 	text-align: center;
 	text-wrap: no-wrap;
+	box-sizing: border-box;
 }
 
 .footer_cell

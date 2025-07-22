@@ -390,7 +390,21 @@ public class PDFElementProperties
 		{
 			if(this.doc_vars.table_column_widths.size()>this.cell_index)//If this column width has been specified then apply it to this cell.
 			{
-				this.width=this.doc_vars.table_column_widths.get(this.cell_index);
+				int colspan = this.getColspan();
+				if(colspan>1)
+				{
+					if(colspan>(this.doc_vars.table_column_widths.size()-this.cell_index))//Span is greater than row size, not possible.
+					{log.severe(class_name+".calculateSetWidth(): colspan is too large! colspan: "+colspan+" cell_index: "+this.cell_index+" row_length: this.doc_vars.table_column_widths.size()");}
+					else
+					{
+						double cell_width = 0;
+						for(int index=this.cell_index; index<(this.cell_index+colspan); index++)
+						{cell_width+=this.doc_vars.table_column_widths.get(index);}
+						this.width=cell_width;
+					}//else.
+				}//if.
+				else
+				{this.width=this.doc_vars.table_column_widths.get(this.cell_index);}
 			}//if.
 		}//if.
 
@@ -1337,6 +1351,11 @@ public class PDFElementProperties
 	{
 		return this.html_data.background_color;
 	}//getBackgroundColor().
+
+	public int getColspan()
+	{
+		return this.html_data.colspan;
+	}//getColspan().
 
 	public String getTag()
 	{return this.tag;}
