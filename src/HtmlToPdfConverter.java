@@ -190,7 +190,7 @@ public class HtmlToPdfConverter
 			{continue;}
 
 			String font_name = parts[0].replaceAll("[\",]+","").trim();
-			String font_file = parts[1].replaceAll("[\"+,]","").trim();
+			String font_file = parts[1].replaceAll("[\",]+","").trim();
 			font_files.add(new String[]{font_name, font_file});
 		}//for(line).
 		return font_files;
@@ -354,6 +354,11 @@ public class HtmlToPdfConverter
     		{word=text_split[wi];}
 
     		float width = base_font.getWidthPoint(word, (float)font_size);
+    		if(wi==0 && parent_element.getTag().equals("li"))
+    		{
+    			width += base_font.getWidthPoint("\u2022 ", (float)font_size);
+    			word="&bull;"+word;
+    		}//if.
     		text_words[wi] = new String[] {word, String.valueOf(width)};
     	}//for(word).
 
@@ -431,7 +436,16 @@ public class HtmlToPdfConverter
 				}
 				else
 				{
-					Phrase text_element = new Phrase(element.getText(), element_font);
+					Paragraph text_element = new Paragraph("", element_font);
+					if(element.getText().startsWith("&bull;"))//List items
+					{
+
+						Chunk bullet = new Chunk("\u2022 ");
+						text_element.add(bullet);
+						text_element.add(element.getText().replace("&bull;",""));
+					}//if.
+					else
+					{text_element.add(element.getText());}
 					ColumnText.showTextAligned(cb, 0, text_element, llx, lly, 0);}
 			}//else if.
 			else

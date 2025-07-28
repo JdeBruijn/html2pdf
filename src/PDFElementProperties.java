@@ -1251,6 +1251,7 @@ public class PDFElementProperties
 			{return Double.parseDouble(value);}
 			if(this.height==-1 && length==null)
 			{
+				CustomException.writeLog(CustomException.SEVERE, null, class_name+".getMargin(): matched_sequence: "+this.html_data.matched_sequence);
 				CustomException.writeLog(CustomException.SEVERE, null, class_name+".getMargin(): height is not defined! Can't retrieve padding-"+side+"="+value+"!");
 				return 0;
 			}//if.
@@ -1265,6 +1266,7 @@ public class PDFElementProperties
 			{return Double.parseDouble(value);}
 			if(this.width==-1 && length==null)
 			{
+				CustomException.writeLog(CustomException.SEVERE, null, class_name+".getMargin(): matched_sequence: "+this.html_data.matched_sequence);
 				CustomException.writeLog(CustomException.SEVERE, null, class_name+".getMargin(): width is not defined! Can't retrieve padding-"+side+"="+value+"!");
 				return 0;
 			}//if.
