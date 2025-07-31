@@ -45,6 +45,8 @@ public class CssInliner
 	private static final String class_name = "CssInliner";
 	private static final Logger log = Logger.getLogger(class_name);
 
+	private static final String default_styling_file = "./defaults.css";
+
 	private HashMap<String, CssObject> css_tags = new HashMap<String, CssObject>();
 	private HashMap<String, CssObject> css_classes = new HashMap<String, CssObject>();
 	private HashMap<String, CssObject> css_ids = new HashMap<String, CssObject>();
@@ -56,7 +58,18 @@ public class CssInliner
 	{
 		CustomException.writeLog(CustomException.DEBUG, null, class_name+".constructor():");//debug**
 
-		boolean open_object = false;
+		if(default_styling_file!=null)
+		{readCss(default_styling_file);}
+		if(css_filename!=null && !css_filename.trim().isEmpty())
+		{readCss(css_filename);}
+
+		CustomException.writeLog(CustomException.DEBUG, null, "css_tags:\n"+StaticStuff.printHashMap(this.css_tags));//debug**
+		CustomException.writeLog(CustomException.DEBUG, null, "css_classes:\n"+StaticStuff.printHashMap(this.css_classes));//debug**
+		CustomException.writeLog(CustomException.DEBUG, null, "css_ids:\n"+StaticStuff.printHashMap(this.css_ids));//debug**
+	}//constructor().
+
+	private void readCss(String css_filename)
+	{
 		String css_string = StaticStuff.readFile(css_filename);
 		if(css_string.trim().isEmpty())
 		{
@@ -65,11 +78,7 @@ public class CssInliner
 		}//if.
 
 		processCss(css_string);
-
-		CustomException.writeLog(CustomException.DEBUG, null, "css_tags:\n"+StaticStuff.printHashMap(this.css_tags));//debug**
-		CustomException.writeLog(CustomException.DEBUG, null, "css_classes:\n"+StaticStuff.printHashMap(this.css_classes));//debug**
-		CustomException.writeLog(CustomException.DEBUG, null, "css_ids:\n"+StaticStuff.printHashMap(this.css_ids));//debug**
-	}//constructor().
+	}//readCss().
 
 	private void processCss(String css_string)
 	{
@@ -106,6 +115,9 @@ public class CssInliner
 
 			for(String param_data: css_parameters)
 			{
+				if(!param_data.contains(":"))//Basic catchall to skip blank lines etc..
+				{continue;}
+
 				try
 				{css_object.addParameter(param_data);}
 				catch(CustomException ce)
@@ -148,7 +160,7 @@ public class CssInliner
 
 			if (line.equals("</body"))
 			{finished = true;}
-		//	System.out.println(class_name+" line="+line);//debug**
+			CustomException.writeLog(CustomException.DEBUG, null, " line="+line);//debug**
 			if (finished || line.charAt(1) == '/')
 			{
 				css_html.append(line + ">\n");
@@ -161,7 +173,9 @@ public class CssInliner
 			String style_insert = "";
 			StringBuilder line_new = new StringBuilder();
 
-			if(line.charAt(0)!='<' || line.charAt(1)=='/')//If this 'line' doesn't contain an opening tag.
+			int open_index = line.indexOf("<");
+
+			if(open_index==-1 || line.charAt(open_index+1)=='/')//If this 'line' doesn't contain an opening tag.
 			{
 				css_html.append(line + ">\n");
 				continue;
@@ -171,7 +185,7 @@ public class CssInliner
 			CustomException.writeLog(CustomException.DEBUG, null, " original line="+line);//debug**
 			String tag="";
 			try
-			{tag = StaticStuff.findFirstMatch(line, "<[^ ]+");}
+			{tag = StaticStuff.findFirstMatch(line, "<[^ ]+").replace("<","");}
 			catch(CustomException ce)
 			{
 				ce.setCodeDescription("Trying to get html element tag");
@@ -199,6 +213,8 @@ public class CssInliner
 				ce.writeLog(null);
 			}//catch().
 
+			CustomException.writeLog(CustomException.DEBUG, null, "tag: "+tag+" id: "+id+" classes: "+classes);//debug**
+
 			inline_styling=null;
 			style_indexes = null;
 			String inline_style_string = "";
@@ -222,7 +238,7 @@ public class CssInliner
 			else
 			{line_new.append(line);}
 
-			if(!all_styling.equals("style=\"\""))
+			if(!all_styling.equals(" style=\"\""))
 			{line_new.append(all_styling);}
 
 			if(style_indexes!=null)
@@ -266,7 +282,7 @@ public class CssInliner
 		{addStyles(style_parameters, important_parameters, inline_styling);}
 
 
-		StringBuilder style_insert = new StringBuilder("style=\"");
+		StringBuilder style_insert = new StringBuilder(" style=\"");
 		for(String param_name: style_parameters.keySet())
 		{
 			style_insert.append(param_name+":"+style_parameters.get(param_name)+"; ");

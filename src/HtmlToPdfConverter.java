@@ -66,17 +66,20 @@ public class HtmlToPdfConverter
 		CustomException.debug(class_name+".main(): base_path: "+doc_vars.base_path);//debug**
 		CustomException.log_level=CustomException.INFO;
 
+//INLINE CSS
+		String css_path=null;
 		if(args.length>=2)//css file specified
-		{
-	//		CustomException.log_level=CustomException.DEBUG;
+		{css_path = args[1];}
 
-			System.out.println("Inlining css...");//debug**
-			String css_path = args[1];
-			CssInliner css_inliner = new CssInliner(css_path);
-			xhtml_string = css_inliner.inline(xhtml_string);
+	//	CustomException.log_level=CustomException.DEBUG;
 
-			CustomException.log_level=CustomException.INFO;
-		}//if.
+		System.out.println("Inlining css...");//debug**
+		CssInliner css_inliner = new CssInliner(css_path);
+		xhtml_string = css_inliner.inline(xhtml_string);
+
+		CustomException.writeLog(CustomException.DEBUG, null, "html with inlined css:\n\t"+xhtml_string);//debug**
+
+		CustomException.log_level=CustomException.INFO;
 
 		doc_vars.setPageSize(global_page_width, global_page_height);
 
@@ -84,6 +87,7 @@ public class HtmlToPdfConverter
 		HashMap<String, BaseFont> custom_fonts = loadFonts();
 		CustomException.log_level=CustomException.INFO;
 
+//READ HTML FILE
 	//	CustomException.log_level=CustomException.DEBUG;
 		LinkedList<PDFElementProperties> flattened_elements = new LinkedList<PDFElementProperties>();
 		try
@@ -100,6 +104,7 @@ public class HtmlToPdfConverter
 		CustomException.log_level=CustomException.INFO;
 
 
+//GENERATE PDF
 	//	CustomException.log_level=CustomException.DEBUG;
 		try (OutputStream os = new FileOutputStream(pdf_path))
 		{
@@ -348,10 +353,11 @@ public class HtmlToPdfConverter
     	String word="";
     	for(int wi=0; wi<text_split.length; wi++)
     	{
-    		if(wi<(text_split.length-1))
-    		{word=text_split[wi]+" ";}
-    		else
-    		{word=text_split[wi];}
+    	//	if(wi<(text_split.length-1))
+    	//	{word=text_split[wi]+" ";}
+    	//	else
+    	//	{word=text_split[wi];}
+    		word=text_split[wi]+" ";
 
     		float width = base_font.getWidthPoint(word, (float)font_size);
     		if(wi==0 && parent_element.getTag().equals("li"))

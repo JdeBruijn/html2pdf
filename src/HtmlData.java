@@ -231,7 +231,7 @@ public class HtmlData
 			return;
 		}//if.
 
-	//	CustomException.debug(class_name+".setParent(): this.tag="+this.tag);//debug**
+		CustomException.debug(class_name+".setParent(): this.tag="+this.tag);//debug**
 	//	CustomException.debug(class_name+".setParent(): parent="+parent);//debug**
 
 		this.parent=parent;
@@ -241,8 +241,8 @@ public class HtmlData
 
 		if(this.getTag().equals("th") || this.getTag().equals("td"))
 		{extractColspan();}
-	//	CustomException.debug(class_name+".setParent(): matched_sequence: "+this.matched_sequence);//debug**
-	//	CustomException.debug(" "+this.printStyling());//debug**
+		CustomException.debug(class_name+".setParent(): matched_sequence: "+this.matched_sequence);//debug**
+		CustomException.debug(" "+this.printStyling());//debug**
 	}//setParent().
 
 	public String getTag()
@@ -268,6 +268,7 @@ public class HtmlData
 
 	private void extractStyleProperties()
 	{
+		CustomException.log_level=CustomException.DEBUG;
 		if(this.style_string==null)
 		{this.style_string="";}//If no styling defined for this element then still copy parent styling.
 
@@ -364,6 +365,7 @@ public class HtmlData
 
 		if(parent_was_null)
 		{this.parent=null;}
+		CustomException.log_level=CustomException.INFO;
 	}//extractStyleProperties().
 
 	private void extractStylePositionAndFloat()
@@ -429,11 +431,11 @@ public class HtmlData
 				this.display="block";
 			}//else.
 		}//if.
-		else
+	/*	else
 		{
 			this.float_side="left";
 			this.display="block";
-		}//else.
+		}//else.*/
 
 	}//extractStylePositionAndFloat().
 

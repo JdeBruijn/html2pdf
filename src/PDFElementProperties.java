@@ -669,12 +669,12 @@ public class PDFElementProperties
 	}//calculateAutoWidth().
 	protected void placeChildren()
 	{
-		if(this.getTag().contains("body") || this.getTag().contains("table"))
-		{
-			System.out.println();//debug**
+	//	if(this.getTag().contains("body") || this.getTag().contains("table"))
+	//	{
+	//		System.out.println();//debug**
 			CustomException.debug("placeChildren(): tag: "+this.tag);//debug**
 			CustomException.debug(" children.size(): "+this.children.size());
-		}//if.
+	//	}//if.
 		this.internal_width = StaticStuff.roundTo(getMaxPossibleChildWidth(),3);
 		this.row_top = 0.0;
 		this.row_rightmost_left = 0.0;
@@ -824,8 +824,8 @@ public class PDFElementProperties
 	{
 	//	if(!child.getTag().contains("text"))
 	//	{
-	//		CustomException.debug(" placeChild(): child.tag: "+child.getTag());//debug**
-	//		CustomException.debug(" child matched_sequence: "+child.html_data.matched_sequence);//debug**
+			CustomException.debug(" placeChild(): child.tag: "+child.getTag());//debug**
+			CustomException.debug(" child matched_sequence: "+child.html_data.matched_sequence);//debug**
 	//		//CustomException.debug(" child.width="+child.width+" child.height="+child.height);//debug**
 	//	}//if.
 		double child_external_width = StaticStuff.roundDownTo(child.getExternalWidth(),3);
@@ -835,14 +835,11 @@ public class PDFElementProperties
 
 	//	if(!child.getTag().contains("text"))
 	//	{
-	//		CustomException.debug(" row_rightmost_left: "+row_rightmost_left);//debug**
-	//		CustomException.debug(" row_leftmost_right: "+row_leftmost_right);//debug**
-	//		CustomException.debug(" child_external_width: "+child_external_width);//debug**
-	//		CustomException.debug(" child_float_side: "+child.getFloatSide());//debug**
+			CustomException.debug(" row_rightmost_left: "+row_rightmost_left);//debug**
+			CustomException.debug(" row_leftmost_right: "+row_leftmost_right);//debug**
+			CustomException.debug(" child_external_width: "+child_external_width);//debug**
+			CustomException.debug(" child_float_side: "+child.getFloatSide());//debug**
 	//	}//if.
-
-		if(this.getTag().equals("body"))
-		{CustomException.debug(" child_float_side: "+child_float_side);}//debug**
 
 		if(child_float_side.startsWith("r"))
 		{
@@ -877,6 +874,7 @@ public class PDFElementProperties
 			//start a new row.
 			if((child_external_width+this.row_rightmost_left)>this.row_leftmost_right || child.getDisplay().equals("block") || (this.previous_child!=null && this.previous_child.getDisplay().equals("block")))
 			{
+			//	CustomException.writeLog(CustomException.DEBUG, null, " child.display: "+child.getDisplay()+" previous_child.display: "+this.previous_child.getDisplay());//debug**
 			//	CustomException.debug(" cew+rrl="+(child_external_width+this.row_rightmost_left)+" rlr="+this.row_leftmost_right);//debug**
 				child.top=this.lowest_child_bottom+child.getMargin("t");
 				child.left=0+child.getMargin("l");
@@ -886,8 +884,6 @@ public class PDFElementProperties
 				this.row_rightmost_left = child_external_width;
 				this.greatest_width=Math.max(this.greatest_width, this.row_rightmost_left);
 				
-		//		if(this.getTag().equals("body"))
-		//		{CustomException.debug(" left child. greatest_width: "+this.greatest_width);}//debug**
 
 				this.row_top=this.lowest_child_bottom;
 				this.row_leftmost_right = this.internal_width;
