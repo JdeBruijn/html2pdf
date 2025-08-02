@@ -49,7 +49,7 @@ public class HtmlToPdfConverter
 
 	public static void main(String[] args)
 	{
-		CustomException.log_level=CustomException.DEBUG;
+	//	CustomException.log_level=CustomException.DEBUG;
 
 		if(args.length<=0 || args[0]==null || args[0].trim().length()<=0)
 		{
@@ -60,7 +60,7 @@ public class HtmlToPdfConverter
 		String pdf_path = xhtml_path.replaceAll("\\.x?html",".pdf");
 		String xhtml_string = readFileToString(xhtml_path);
 
-		PdfDocVars doc_vars = new PdfDocVars();
+		GlobalDocVars doc_vars = new GlobalDocVars();
 
 		doc_vars.base_path=getBasePath(xhtml_path);//Used for finding location of things like images.
 		CustomException.debug(class_name+".main(): base_path: "+doc_vars.base_path);//debug**
@@ -115,16 +115,6 @@ public class HtmlToPdfConverter
 			System.out.println("SEVERE: "+class_name+"IO Exception while trying to generate PDF:\n"+ioe);
 		}//catch().*/
 		CustomException.log_level=CustomException.INFO;
-
-
-		/*try (OutputStream os = new FileOutputStream("example.pdf"))
-		{
-			generateExamplePdf(xhtml_string, os);
-		}//try.
-		catch(IOException ioe)
-		{
-			System.out.println("SEVERE: "+class_name+"IO Exception while trying to generate PDF:\n"+ioe);
-		}//catch().*/
 	}//main().
 
 	public static String getBasePath(String file_path)
@@ -218,7 +208,7 @@ public class HtmlToPdfConverter
 	}//readFileToString().
 
 
-	private static PDFElementProperties readXHTML(String xhtml_string, HashMap<String, BaseFont> custom_fonts, PdfDocVars doc_vars) throws CustomException
+	private static PDFElementProperties readXHTML(String xhtml_string, HashMap<String, BaseFont> custom_fonts, GlobalDocVars doc_vars) throws CustomException
 	{
 		CustomException.debug(class_name+".readXHTML(): ");//debug**
 
@@ -380,7 +370,7 @@ public class HtmlToPdfConverter
 		}//catch().
 	}//lookForUnenclosedText().
 
-	private static void generatePdf(LinkedList<PDFElementProperties> flattened_elements, OutputStream pdf_output_stream, HashMap<String, BaseFont>custom_fonts, PdfDocVars doc_vars) throws IOException
+	private static void generatePdf(LinkedList<PDFElementProperties> flattened_elements, OutputStream pdf_output_stream, HashMap<String, BaseFont>custom_fonts, GlobalDocVars doc_vars) throws IOException
 	{
 		float page_width = (float)doc_vars.getPageWidth();
 		float page_height = (float)doc_vars.getPageHeight();
@@ -540,59 +530,6 @@ public class HtmlToPdfConverter
 		}//for(child.)
 
 	}//flattenElements().
-
-	private static void generateExamplePdf(String xhtml_string, OutputStream pdf_output_stream) throws IOException
-	{
-		Rectangle a4 = PageSize.A4;
-		System.out.println("A4 height = "+a4.getHeight());//debug**
-		System.out.println("A4 Width = "+a4.getWidth());//debug**
-		//A4 height = 842.0
-		//A4 Width = 595.0
-
-
-
-		//Font font1 = FontFactory.getFont("Helvetica", 8, Font.BOLD, Color.BLACK);
-		Rectangle page_rectangle = PageSize.A4;
-		System.out.println("page_rectangle:"
-						+ "\n\t"+page_rectangle
-						+ "\n\tborder_left="+page_rectangle.getBorderWidthLeft()
-						+ "\n\tborder_top="+page_rectangle.getBorderWidthTop());//debug**
-
-		Document document = new Document(PageSize.A4, 0, 0, 0, 0);
-		PdfWriter writer = PdfWriter.getInstance(document, pdf_output_stream);
-		document.open();
-
-		PdfContentByte cb = writer.getDirectContent();
-
-		Rectangle random_box1 = new Rectangle(0.5f, 1f, 594.5f, 841.5f);
-		random_box1.setBorder(15);
-		random_box1.setBorderWidth(1);
-		document.add(random_box1);
-		Rectangle random_box2 = new Rectangle(20f,20f,574f, 821f);
-		random_box2.setBorder(15);
-		random_box2.setBorderWidth(2);
-		//document.add(random_box2);
-		
-		//How to embed my own custom font.
-		//BaseFont bf = BaseFont.createFont("fonts/YourFont.ttf", BaseFont.IDENTITY_H, BaseFont.EMBEDDED);
-		//Font font = new Font(bf, 12);
-		BaseFont base_font = BaseFont.createFont();
-		Font default_font = new Font(base_font, 14, Font.NORMAL, Color.black);
-				
-		Phrase test_para1 = new Phrase("Test phrase M", default_font);// also a very long phrase that I am really hoping I can get to be longer than the width of the entire page in order to force a wrap-around");
-				 //showTextAligned(PdfContentByte canvas, int alignment, Phrase phrase, float x, float y, float rotation)
-		ColumnText.showTextAligned(cb, 0, test_para1, 2, 830, 0);
-		
-		Chunk test_para2 = new Chunk("Test Paragraph 2", default_font);
-		//test_para2.setLeading(0);
-		//ColumnText.showTextAligned(cb, 0f, test_para2, 0, 0, 0);
-
-
-		//HTMLWorker htmlWorker = new HTMLWorker(document);
-		//htmlWorker.parse(new StringReader(xhtml_string));
-		document.close();
-
-	}//generateExamplePdf().
 
 
 }//class HtmlToPdfConverter.

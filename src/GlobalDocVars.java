@@ -11,9 +11,9 @@ import java.util.HashMap;
 import java.util.List;
 
 
-public class PdfDocVars
+public class GlobalDocVars
 {
-	private static final String class_name = "PdfDocVars";
+	private static final String class_name = "GlobalDocVars";
 	private static final Logger log = Logger.getLogger(class_name);
 
 
@@ -32,7 +32,7 @@ public class PdfDocVars
 	public int current_cell_index = 0;
 
 
-	public PdfDocVars()
+	public GlobalDocVars()
 	{}//null constructor().
 
 	public void setPageSize(double width, double height)
@@ -56,4 +56,4 @@ public class PdfDocVars
 	{return page_height;}
 
 
-}//class PdfDocVars.
+}//class GlobalDocVars.

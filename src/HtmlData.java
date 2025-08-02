@@ -268,7 +268,7 @@ public class HtmlData
 
 	private void extractStyleProperties()
 	{
-		CustomException.log_level=CustomException.DEBUG;
+	//	CustomException.log_level=CustomException.DEBUG;
 		if(this.style_string==null)
 		{this.style_string="";}//If no styling defined for this element then still copy parent styling.
 
@@ -285,6 +285,11 @@ public class HtmlData
 		extractStylePositionAndFloat();
 
 		extractStyleDisplay();
+
+	//Font
+		extractFontData();
+
+		extractTextProperties();//wrap, alignment.
 
 
 	//Width and Height.
@@ -314,11 +319,6 @@ public class HtmlData
 		extractMargins();
 
 		extractPadding();
-
-	//Font
-		extractFontData();
-
-		extractTextProperties();//wrap, alignment.
 
 	//Foreground Color
 		try
@@ -365,7 +365,6 @@ public class HtmlData
 
 		if(parent_was_null)
 		{this.parent=null;}
-		CustomException.log_level=CustomException.INFO;
 	}//extractStyleProperties().
 
 	private void extractStylePositionAndFloat()
@@ -480,6 +479,155 @@ public class HtmlData
 
 	}//extractStyleDisplay().
 
+	private void extractFontData()
+	{
+	//	CustomException.log_level=CustomException.DEBUG;
+	//	CustomException.debug(class_name+".extractFontData(): matched_sequence: "+this.matched_sequence);//debug**
+	//	CustomException.debug(" tag: "+this.getTag());//debug**
+
+	//Font Size
+		String font_size_str="";
+		try
+		{
+			font_size_str = StaticStuff.findLastMatchWithDefaultValue(this.style_string, "font-size *: *[0-9.]+(em)?", String.valueOf(parent.font_size)).replaceAll("font-size *: *","");
+	//		CustomException.debug(" font_size_str: "+font_size_str);//debug**
+			this.font_size=Double.parseDouble(font_size_str.replaceAll("[^0-9.]+",""));
+			if(font_size_str.matches("[0-9]+\\.?[0-9]*em"))
+			{
+				this.font_size = StaticStuff.roundTo(parent.font_size*this.font_size,2);//Use 'this.font_size' as a multiplier instead.
+			}//if.
+	//		CustomException.debug(" this.font_size: "+this.font_size);//debug**
+		}//try.
+		catch(CustomException ce)
+		{
+			ce.setCodeDescription("Trying to extract 'font-size' from style_string");
+			ce.writeLog(log);
+			this.font_size=parent.font_size;
+		}//catch().
+		catch(NumberFormatException nfe)
+		{
+			this.font_size=parent.font_size;
+		}//catch().
+
+
+	//Text Decoration
+		String decoration="";
+		try
+		{
+			decoration = StaticStuff.findLastMatchWithDefaultValue(this.style_string, "text-decoration *: *[^;\"]+","").replaceAll("text-decoration *: *","").trim();
+		}//try.
+		catch(CustomException ce)
+		{
+			ce.setCodeDescription("Trying to extract 'text-decoration' from style_string");
+			ce.writeLog(log);
+			decoration="";
+		}//catch(ce).
+		decoration=decoration.toLowerCase();
+		if(this.text_decoration.isEmpty())
+		{this.text_decoration=decoration;}
+
+		if(this.text_decoration.isEmpty())
+		{
+			if(this.getTag().equals("i") && !this.text_decoration.contains("italic"))//italic
+			{this.text_decoration+=" italic";}
+			if(this.getTag().equals("b") && !this.text_decoration.contains("bold"))//italic
+			{this.text_decoration+=" bold";}
+			if(this.getTag().equals("a") && !this.text_decoration.contains("underline"))//italic
+			{this.text_decoration+=" underline";}
+		}//if.
+	//	CustomException.debug(" text_decoration: "+this.text_decoration);//debug**
+
+
+	//Font Family.
+		try
+		{this.font_family = StaticStuff.findLastMatchWithDefaultValue(this.style_string, "font-family *: *[^;\"]+", parent.font_family).replaceAll("font-family *: *+","").trim();}
+		catch(CustomException ce)
+		{
+			ce.setCodeDescription("Trying to extract 'font-family' from style_string");
+			ce.writeLog(log);
+		}//catch().
+		if(this.font_family.trim().isEmpty())
+		{this.font_family=parent.font_family;}
+	//	CustomException.debug(" parent.font_family: "+this.parent.font_family);//debug**
+	//	CustomException.debug(" font_family: "+this.font_family);//debug**
+
+
+	//Font Weight.
+		String font_weight_style="";
+		try
+		{font_weight_style = StaticStuff.findLastMatch(this.style_string, "font-weight *: *[^;\"]+").replaceAll("font-weight *: *","");}
+		catch(CustomException ce)
+		{
+			ce.setCodeDescription("Trying to extract 'font-weight' from style_string");
+			ce.writeLog(log);
+		}//catch().
+
+		if(font_weight_style.trim().isEmpty())
+		{
+			if(this.text_decoration.contains("bold"))
+			{this.font_weight=700;}
+			else
+			{this.font_weight=parent.font_weight;}
+			return;
+		}//if.
+
+		font_weight_style = font_weight_style.toLowerCase();
+
+		if(font_weight_style.equals("none"))
+		{
+			this.font_weight=0;
+			return;
+		}//if.
+
+		if(font_weights_map.containsKey(font_weight_style))
+		{
+			this.font_weight = font_weights_map.get(font_weight_style);
+			return;
+		}//if.
+
+		try
+		{
+			this.font_weight = Integer.parseInt(font_weight_style);
+			return;
+		}//try.
+		catch(NumberFormatException nfe)
+		{log.severe(class_name+".extractFontData(): Number Format Exception:\n"+nfe);}
+
+		this.font_weight=parent.font_weight;
+	}//extractFontData().
+
+	private void extractTextProperties()
+	{
+	//text-align
+		try
+		{
+			this.text_align = StaticStuff.findLastMatchWithDefaultValue(this.style_string, "text-align *: *[^;\"]+", String.valueOf(parent.text_align)).replaceAll("text-align *: *","").trim();
+			if(this.text_align.isEmpty())
+			{this.text_align=parent.text_align;}
+		}//try.
+		catch(CustomException ce)
+		{
+			ce.setCodeDescription("trying to extract text-align property");
+			ce.writeLog(log);
+			this.text_align=parent.text_align;
+		}//catch().
+
+	////white_space;
+		try
+		{
+			this.white_space = StaticStuff.findLastMatchWithDefaultValue(this.style_string, "white-space *: *[^;\"]+", String.valueOf(parent.white_space)).replaceAll("white-space *: *","").trim();
+			//CustomException.debug(class_name+".extractTextProperties(): this.white_space: "+this.white_space);//debug**
+			if(this.white_space.isEmpty())
+			{this.white_space=parent.white_space;}
+		}//try.
+		catch(CustomException ce)
+		{
+			ce.setCodeDescription("trying to extract white_space property");
+			ce.writeLog(log);
+			this.white_space=parent.white_space;
+		}//catch().
+	}//extractTextProperties().
+
 	//Works for all properties that might be defined statically or as a percentage.
 	// 'calc' or other values will be ignored and 'default_value' used instead.
 	private String extractStyleDimension(String property_name, String default_value, String parent_value, String none_value)
@@ -493,7 +641,10 @@ public class HtmlData
 
 		String value=default_value;
 		try
-		{value = StaticStuff.findLastMatch(this.style_string, property_name+" *:[^;\"]+");}
+		{
+			value = StaticStuff.findLastMatch(this.style_string, property_name+" *:[^;\"]+");
+			value = StaticStuff.findFirstMatch(value, "[0-9]+\\.?[0-9]*(%|em)?|-1");
+		}//try.
 		catch(CustomException ce)
 		{
 			ce.setCodeDescription("Trying to extract '"+property_name+"' from style_string");
@@ -507,12 +658,15 @@ public class HtmlData
 		if(value.trim().equals("inherit"))
 		{return parent_value;}
 
-		value = value.replaceAll("[^0-9.%]+",""); //Remove anything that isn't a number or the '%' sign.
+	/*	Commented 'cos extracting values from bad data seems like a bad idea. Just give a warning if the value isn't good.
+		value = value.replaceAll("[^0-9.]+(%|em)?",""); //Remove anything that isn't a number or the '%' sign.
 		value = value.replaceAll("%.+","%");//Remove anything after '%';
+		value = value.replaceAll("em.+","em");//Remove anything after 'em';
+	*/
 
-		if(value.isEmpty() || value.equals("%"))
+		if(value.isEmpty() || value.equals("%") || value.equals("em"))
 		{value=default_value;}
-		else if(!value.matches("[0-9]+\\.?[0-9]*%?|-1"))
+		else if(!value.matches("[0-9]+\\.?[0-9]*(%|em)?|-1"))
 		{
 			System.out.println("Warning: "+class_name+".extractStyleDimension(): invalid value '"+value+"' for property '"+property_name+"'. Using '"+default_value+"' instead.");
 			value=default_value;
@@ -665,17 +819,17 @@ public class HtmlData
 				String[] all_margins = style_all_margins.split(" ");
 				if(all_margins.length==1)
 				{
-					String global_margin = numbersAndPercent(all_margins[0]);
+					String global_margin = numbersAndPercentAndMSizing(all_margins[0]);
 					this.margins=new String[]{global_margin, global_margin, global_margin, global_margin};
 				}//if.
 				else if(all_margins.length==2)
 				{
-					String top_bottom = numbersAndPercent(all_margins[0]);
-					String left_right = numbersAndPercent(all_margins[1]);
+					String top_bottom = numbersAndPercentAndMSizing(all_margins[0]);
+					String left_right = numbersAndPercentAndMSizing(all_margins[1]);
 					this.margins=new String[]{top_bottom, left_right, top_bottom, left_right};
 				}//else if.
 				else if(all_margins.length==4)
-				{this.margins=new String[]{numbersAndPercent(all_margins[0]),numbersAndPercent(all_margins[1]),numbersAndPercent(all_margins[2]),numbersAndPercent(all_margins[3])};}
+				{this.margins=new String[]{numbersAndPercentAndMSizing(all_margins[0]),numbersAndPercentAndMSizing(all_margins[1]),numbersAndPercentAndMSizing(all_margins[2]),numbersAndPercentAndMSizing(all_margins[3])};}
 			}//else.
 		}//if.
 		//System.out.println(" this.margins: "+Arrays.toString(this.margins));//debug**
@@ -726,17 +880,17 @@ public class HtmlData
 				String[] all_paddings = style_all_paddings.split(" ");
 				if(all_paddings.length==1)
 				{
-					String global_padding = numbersAndPercent(all_paddings[0]);
+					String global_padding = numbersAndPercentAndMSizing(all_paddings[0]);
 					this.paddings=new String[]{global_padding, global_padding, global_padding, global_padding};
 				}//if.
 				else if(all_paddings.length==2)
 				{
-					String top_bottom = numbersAndPercent(all_paddings[0]);
-					String left_right = numbersAndPercent(all_paddings[1]);
+					String top_bottom = numbersAndPercentAndMSizing(all_paddings[0]);
+					String left_right = numbersAndPercentAndMSizing(all_paddings[1]);
 					this.paddings=new String[]{top_bottom, left_right, top_bottom, left_right};
 				}//else if.
 				else if(all_paddings.length==4)
-				{this.paddings=new String[]{numbersAndPercent(all_paddings[0]),numbersAndPercent(all_paddings[1]),numbersAndPercent(all_paddings[2]),numbersAndPercent(all_paddings[3])};}
+				{this.paddings=new String[]{numbersAndPercentAndMSizing(all_paddings[0]),numbersAndPercentAndMSizing(all_paddings[1]),numbersAndPercentAndMSizing(all_paddings[2]),numbersAndPercentAndMSizing(all_paddings[3])};}
 			}//else.
 		}//if.
 		//System.out.println(" this.paddings: "+Arrays.toString(this.paddings));//debug**
@@ -764,147 +918,6 @@ public class HtmlData
 		this.padding_left = left_padding.replaceAll("none","0");
 	}//extractPadding().
 
-	private void extractFontData()
-	{
-	//	CustomException.debug(class_name+".extractFontData(): matched_sequence: "+this.matched_sequence);//debug**
-	//	CustomException.debug(" tag: "+this.getTag());//debug**
-
-	//Font Size
-		String font_size_str="";
-		try
-		{
-			font_size_str = StaticStuff.findLastMatchWithDefaultValue(this.style_string, "font-size *: *[0-9.]+", String.valueOf(parent.font_size));
-			this.font_size=Double.parseDouble(font_size_str.replaceAll("[^0-9.]+",""));
-		}//try.
-		catch(CustomException ce)
-		{
-			ce.setCodeDescription("Trying to extract 'font-size' from style_string");
-			ce.writeLog(log);
-			this.font_size=parent.font_size;
-		}//catch().
-		catch(NumberFormatException nfe)
-		{
-			this.font_size=parent.font_size;
-		}//catch().
-
-
-	//Text Decoration
-		String decoration="";
-		try
-		{
-			decoration = StaticStuff.findLastMatchWithDefaultValue(this.style_string, "text-decoration *: *[^;\"]+","").replaceAll("text-decoration *: *","").trim();
-		}//try.
-		catch(CustomException ce)
-		{
-			ce.setCodeDescription("Trying to extract 'text-decoration' from style_string");
-			ce.writeLog(log);
-			decoration="";
-		}//catch(ce).
-		decoration=decoration.toLowerCase();
-		if(this.text_decoration.isEmpty())
-		{this.text_decoration=decoration;}
-
-		if(this.text_decoration.isEmpty())
-		{
-			if(this.getTag().equals("i") && !this.text_decoration.contains("italic"))//italic
-			{this.text_decoration+=" italic";}
-			if(this.getTag().equals("b") && !this.text_decoration.contains("bold"))//italic
-			{this.text_decoration+=" bold";}
-			if(this.getTag().equals("a") && !this.text_decoration.contains("underline"))//italic
-			{this.text_decoration+=" underline";}
-		}//if.
-	//	CustomException.debug(" text_decoration: "+this.text_decoration);//debug**
-
-
-	//Font Family.
-		try
-		{this.font_family = StaticStuff.findLastMatchWithDefaultValue(this.style_string, "font-family *: *[^;\"]+", parent.font_family).replaceAll("font-family *: *+","").trim();}
-		catch(CustomException ce)
-		{
-			ce.setCodeDescription("Trying to extract 'font-family' from style_string");
-			ce.writeLog(log);
-		}//catch().
-		if(this.font_family.trim().isEmpty())
-		{this.font_family=parent.font_family;}
-	//	CustomException.debug(" parent.font_family: "+this.parent.font_family);//debug**
-	//	CustomException.debug(" font_family: "+this.font_family);//debug**
-
-
-	//Font Weight.
-		String font_weight_style="";
-		try
-		{font_weight_style = StaticStuff.findLastMatch(this.style_string, "font-weight *: *[^;\"]+").replaceAll("font-weight *: *","");}
-		catch(CustomException ce)
-		{
-			ce.setCodeDescription("Trying to extract 'font-weight' from style_string");
-			ce.writeLog(log);
-		}//catch().
-
-		if(font_weight_style.trim().isEmpty())
-		{
-			if(this.text_decoration.contains("bold"))
-			{this.font_weight=700;}
-			else
-			{this.font_weight=parent.font_weight;}
-			return;
-		}//if.
-
-		font_weight_style = font_weight_style.toLowerCase();
-
-		if(font_weight_style.equals("none"))
-		{
-			this.font_weight=0;
-			return;
-		}//if.
-
-		if(font_weights_map.containsKey(font_weight_style))
-		{
-			this.font_weight = font_weights_map.get(font_weight_style);
-			return;
-		}//if.
-
-		try
-		{
-			this.font_weight = Integer.parseInt(font_weight_style);
-			return;
-		}//try.
-		catch(NumberFormatException nfe)
-		{log.severe(class_name+".extractFontData(): Number Format Exception:\n"+nfe);}
-
-		this.font_weight=parent.font_weight;
-	}//extractFontData().
-
-	private void extractTextProperties()
-	{
-	//text-align
-		try
-		{
-			this.text_align = StaticStuff.findLastMatchWithDefaultValue(this.style_string, "text-align *: *[^;\"]+", String.valueOf(parent.text_align)).replaceAll("text-align *: *","").trim();
-			if(this.text_align.isEmpty())
-			{this.text_align=parent.text_align;}
-		}//try.
-		catch(CustomException ce)
-		{
-			ce.setCodeDescription("trying to extract text-align property");
-			ce.writeLog(log);
-			this.text_align=parent.text_align;
-		}//catch().
-
-	////white_space;
-		try
-		{
-			this.white_space = StaticStuff.findLastMatchWithDefaultValue(this.style_string, "white-space *: *[^;\"]+", String.valueOf(parent.white_space)).replaceAll("white-space *: *","").trim();
-			//CustomException.debug(class_name+".extractTextProperties(): this.white_space: "+this.white_space);//debug**
-			if(this.white_space.isEmpty())
-			{this.white_space=parent.white_space;}
-		}//try.
-		catch(CustomException ce)
-		{
-			ce.setCodeDescription("trying to extract white_space property");
-			ce.writeLog(log);
-			this.white_space=parent.white_space;
-		}//catch().
-	}//extractTextProperties().
 
 	//Table cells only. 'colspan' is and attribute that specifies how many 'columns-to-span'.
 	private void extractColspan()
@@ -926,11 +939,11 @@ public class HtmlData
 		}//catch().
 	}//extractColspan().
 
-	public String numbersAndPercent(String input)
+	public String numbersAndPercentAndMSizing(String input)
 	{
 		try
 		{
-			return StaticStuff.findFirstMatchWithDefaultValue(input, "^[0-9]+\\.?[0-9]*%?","0");
+			return StaticStuff.findFirstMatchWithDefaultValue(input, "^[0-9]+\\.?[0-9]*(%|em)?","0");
 		}//try.
 		catch(CustomException ce)
 		{

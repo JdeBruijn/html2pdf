@@ -27,7 +27,7 @@ public class PDFElementProperties
 	public final double text_margin_t_fraction=0.0;
 
 
-	private PdfDocVars doc_vars=null;
+	private GlobalDocVars doc_vars=null;
 
 	public HtmlData html_data=null;
 
@@ -92,12 +92,12 @@ public class PDFElementProperties
 	private int cell_index=0;//The column this table cell belongs to (if this is a table cell element).
 
 
-	public PDFElementProperties(PdfDocVars doc_vars)
+	public PDFElementProperties(GlobalDocVars doc_vars)
 	{
 		this.doc_vars=doc_vars;
 	}//constructor().
 
-	public PDFElementProperties(PdfDocVars doc_vars, PDFElementProperties parent, HtmlData html_data) throws CustomException
+	public PDFElementProperties(GlobalDocVars doc_vars, PDFElementProperties parent, HtmlData html_data) throws CustomException
 	{
 		//CustomException.debug("PDFElementProperties(): ");//debug**
 		this.doc_vars=doc_vars;
@@ -351,9 +351,14 @@ public class PDFElementProperties
 			}//if.
 			//CustomException.debug(class_name+".calculateSetWidth(): style_width==-1, returning.");//debug**
 		}//if.
+		else if(style_width.endsWith("em"))//M-Sizing.
+		{
+			double fraction = Double.parseDouble(style_width.substring(0, style_width.length()-2));
+			this.width = StaticStuff.roundTo(this.getFontSize()*fraction, 3);
+		}//else if.
 		else if(style_width.endsWith("%"))//Percentage.
 		{
-			double percentage = Double.parseDouble(style_width.replaceAll("%",""));
+			double percentage = Double.parseDouble(style_width.substring(0, style_width.length()-1));
 			if(this.parent!=null)
 			{
 				this.parent.getMaxPossibleChildWidth();
@@ -428,6 +433,11 @@ public class PDFElementProperties
 				//CustomException.debug("IMAGE height: "+this.height);//debug**
 			}//if.
 		}//if.
+		else if(style_height.endsWith("em"))//M-Sizing.
+		{
+			double fraction = Double.parseDouble(style_height.substring(0, style_height.length()-2));
+			this.height = StaticStuff.roundTo(this.getFontSize()*fraction, 3);
+		}//else if.
 		else if(style_height.endsWith("%"))
 		{
 			if(this.max_height<=-1)
@@ -435,9 +445,9 @@ public class PDFElementProperties
 				CustomException.writeLog(CustomException.WARNING, null, "WARNING: "+class_name+".calculateHeight(): Cannot calculate percentage height when parent height is not fixed!");
 				this.height=-1;
 			}//if.
-			double percentage = Double.parseDouble(style_height.replaceAll("%",""));
+			double percentage = Double.parseDouble(style_height.substring(0, style_height.length()-1));
 			this.height = StaticStuff.roundTo((percentage*this.max_height)/100,3);
-		}//if.
+		}//else if.
 		else
 		{this.height = Double.parseDouble(style_height);}
 
@@ -617,6 +627,13 @@ public class PDFElementProperties
 
 		calculateAutoWidth();
 		calculateAutoHeight();
+
+		if((this.getTag().equals("body") || this.parent==null) && this.width!=-1)//<body> or top_level element.
+		{
+	//		doc_vars.page_width=Math.min(doc_vars.page_width, this.getMargin("l")+this.getWidth()+this.getMargin("r"));
+	//		CustomException.writeLog(CustomException.INFO, log, class_name+".closeTag(): page_width set to: "+doc_vars.page_width);//INFO.
+		}//if.
+
 	//	CustomException.debug(this.printRelativeLocationData());//debug**
 	}//closeTag().
 
@@ -1146,7 +1163,7 @@ public class PDFElementProperties
 		parent.addChild(this);
 	}//setParent().
 
-	public PdfDocVars getDocVars()
+	public GlobalDocVars getDocVars()
 	{return this.doc_vars;}
 
 	public String getPosition()
@@ -1192,10 +1209,15 @@ public class PDFElementProperties
 			return 0;
 		}//else.
 
-		if(side.startsWith("t") || side.startsWith("b"))
+		if(value.endsWith("em"))
 		{
-			if(!value.endsWith("%"))
-			{return Double.parseDouble(value);}
+			double fraction = Double.parseDouble(value.substring(0, value.length()-2));
+			return StaticStuff.roundDownTo(this.getFontSize()*fraction,3);
+		}//if.
+		else if(!value.endsWith("%"))
+		{return Double.parseDouble(value);}
+		else if(side.startsWith("t") || side.startsWith("b"))
+		{
 			if(this.width==-1 && length==null)
 			{
 				CustomException.writeLog(CustomException.SEVERE, null, "SEVERE: "+class_name+".getMargin(): height is not defined! Can't retrieve margin-"+side+"="+value+"!");
@@ -1205,11 +1227,9 @@ public class PDFElementProperties
 			{length=this.width;}
 			double percentage = Double.parseDouble(value.replaceAll("%",""));
 			return StaticStuff.roundDownTo((length*percentage)/100,3);
-		}//if.
+		}//else if.
 		else
 		{
-			if(!value.endsWith("%"))
-			{return Double.parseDouble(value);}
 			if(this.width==-1 && length==null)
 			{
 				CustomException.writeLog(CustomException.SEVERE, null, "SEVERE: "+class_name+".getMargin(): width is not defined! Can't retrieve margin-"+side+"="+value+"!");
@@ -1241,10 +1261,15 @@ public class PDFElementProperties
 			return 0;
 		}//else.
 
-		if(side.startsWith("t") || side.startsWith("b"))
+		if(value.endsWith("em"))
 		{
-			if(!value.endsWith("%"))
-			{return Double.parseDouble(value);}
+			double fraction = Double.parseDouble(value.substring(0, value.length()-2));
+			return StaticStuff.roundDownTo(this.getFontSize()*fraction,3);
+		}//if.
+		else if(!value.endsWith("%"))
+		{return Double.parseDouble(value);}
+		else if(side.startsWith("t") || side.startsWith("b"))
+		{
 			if(this.height==-1 && length==null)
 			{
 				CustomException.writeLog(CustomException.SEVERE, null, class_name+".getMargin(): matched_sequence: "+this.html_data.matched_sequence);
@@ -1255,11 +1280,9 @@ public class PDFElementProperties
 			{length=this.height;}
 			double percentage = Double.parseDouble(value.replaceAll("%",""));
 			return StaticStuff.roundDownTo((length*percentage)/100,3);
-		}//if.
+		}//else if.
 		else
 		{
-			if(!value.endsWith("%"))
-			{return Double.parseDouble(value);}
 			if(this.width==-1 && length==null)
 			{
 				CustomException.writeLog(CustomException.SEVERE, null, class_name+".getMargin(): matched_sequence: "+this.html_data.matched_sequence);
