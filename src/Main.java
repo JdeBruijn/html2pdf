@@ -78,7 +78,10 @@ public class Main
 		LinkedList<String[]> font_files = new LinkedList<String[]>();
 		List<String> file_lines  = StaticStuff.readFileLines(fonts_config_path);
 		if(file_lines==null || file_lines.size()<=0)
-		{return font_files;}
+		{
+			log.info(class_name+".getFontConfigs(): no file found at '"+fonts_config_path+"'.");
+			return font_files;
+		}//if.
 
 		for(String line: file_lines)
 		{
