@@ -33,189 +33,116 @@ import javax.imageio.ImageIO;
 
 
 
-public class HtmlToImageConverter
+public class HtmlToImageConverter extends HtmlConverter
 {
 	public static final String class_name = "HtmlToImageConverter";
 	public static final Logger log = Logger.getLogger(class_name);
 
-	//A4 Width = 595.0
-	//A4 height = 842.0
-	//Landscape mode:
-	private static final double global_page_width=842;
-	private static final double global_page_height=595;
+	private FontRenderContext dummy_frc = null;
 
-	private static final BufferedImage dummy_image = new BufferedImage((int)global_page_width, (int)global_page_height, BufferedImage.TYPE_INT_ARGB);
-	private static final Graphics2D dummy_graphics = dummy_image.createGraphics();
-	//private static FontRenderContext dummy_frc = new FontRenderContext(null, true, true);
-	private static FontRenderContext dummy_frc = dummy_graphics.getFontRenderContext();
+	HashMap<String, Font> custom_fonts = null;
 
-	private static final double space_m_sizing = 0.33;
+	//Variables defined in parent class.
+	//private GlobalDocVars doc_vars = new GlobalDocVars();
+	//protected CssInliner css_inliner = null;
+	//protected double space_m_sizing = 0.33;
+	//protected LinkedList<PDFElementProperties> flattened_elements = null;
 
-	public static void main(String[] args)
+	public HtmlToImageConverter(String base_path, String css_path, List<String[]> font_files, Double space_m_sizing, double output_width, double output_height)
 	{
-		CustomException.log_level=CustomException.DEBUG;
+		setBasePath(base_path);//Used for finding location of things like images.
+		HtmlConversionException.debug(class_name+".main(): base_path: "+this.doc_vars.base_path);//debug**
 
-		if(args.length<=0 || args[0]==null || args[0].trim().length()<=0)
-		{
-			System.out.println("SEVERE: "+"Please specify a XHTML input file. Usage:\n\tjava HtmlToImageConverter 'path/to/file.html' ['path/to/css.file']");
-			return;
-		}//if.
-		String xhtml_path = args[0];
-		String image_path = xhtml_path.replaceAll("\\.x?html",".png");
-		String xhtml_string = readFileToString(xhtml_path);
+		if(css_path!=null && !css_path.trim().isEmpty())
+		{css_path = normalizePath(css_path);}
 
-		GlobalDocVars doc_vars = new GlobalDocVars();
+		log.info(class_name+" Reading css...");//debug**
+		this.css_inliner = new CssInliner(css_path);
 
-		doc_vars.base_path=getBasePath(xhtml_path);//Used for finding location of things like images.
-		CustomException.debug(class_name+".main(): base_path: "+doc_vars.base_path);//debug**
-		CustomException.log_level=CustomException.INFO;
+		this.doc_vars.setPageSize(output_width, output_height);
 
-//INLINE CSS
-		String css_path=null;
-		if(args.length>=2)//css file specified
-		{css_path = args[1];}
+		loadFonts(font_files);
 
-	//	CustomException.log_level=CustomException.DEBUG;
+		if(space_m_sizing!=null)
+		{this.space_m_sizing=space_m_sizing;}
 
-		System.out.println("Inlining css...");//debug**
-		CssInliner css_inliner = new CssInliner(css_path);
-		xhtml_string = css_inliner.inline(xhtml_string);
+		BufferedImage dummy_image = new BufferedImage((int)this.doc_vars.getPageWidth(), (int)this.doc_vars.getPageHeight(), BufferedImage.TYPE_INT_ARGB);
+		Graphics2D dummy_graphics = dummy_image.createGraphics();
+		this.dummy_frc = dummy_graphics.getFontRenderContext();
 
-		CustomException.writeLog(CustomException.DEBUG, null, "html with inlined css:\n\t"+xhtml_string);//debug**
-
-		CustomException.log_level=CustomException.INFO;
-
-		doc_vars.setPageSize(global_page_width, global_page_height);
-
-	//	CustomException.log_level=CustomException.DEBUG;
-		HashMap<String, Font> custom_fonts = loadFonts();
-		CustomException.log_level=CustomException.INFO;
-
-//READ HTML FILE
-	//	CustomException.log_level=CustomException.DEBUG;
-		LinkedList<PDFElementProperties> flattened_elements = new LinkedList<PDFElementProperties>();
-		try
-		{
-			PDFElementProperties top_element=readXHTML(xhtml_string, custom_fonts, doc_vars);
-			flattenElements(flattened_elements, top_element);
-		}//try.
-		catch(CustomException ce)
-		{
-			ce.writeLog(log);
-			if(ce.severity<CustomException.WARNING)
-			{return;}
-		}//catch().
-		CustomException.log_level=CustomException.INFO;
+	}//constructor().
 
 
-//GENERATE IMAGE
-	//	CustomException.log_level=CustomException.DEBUG;
-
-		try
-		{
-			generateImage(flattened_elements, image_path, custom_fonts, doc_vars);
-		}//try.
-		catch(CustomException ce)
-		{
-			ce.writeLog(log);
-		}//catch().*/
-		CustomException.log_level=CustomException.INFO;
-		
-	/*	try
-		{generateExampleImage();}
-		catch(CustomException ce)
-		{
-			ce.writeLog(log);
-		}//catch().*/
-
-	}//main().
-
-	public static String getBasePath(String file_path)
+	protected void loadFonts(List<String[]> font_files)
 	{
-		if(!file_path.contains("/"))
-		{return "./";}
+		if(this.custom_fonts==null)
+		{this.custom_fonts = new HashMap<String, Font>();}
 
-		return file_path.replaceAll("/[^/]+\\.x?html","/");//
-	}//getBasePath().
-
-	public static HashMap<String, Font> loadFonts()
-	{
-		List<String[]> font_files = getFontConfigs();
-
-		HashMap<String, Font> custom_fonts = new HashMap<String, Font>();
 		for(String[] name_and_file: font_files)
 		{
-			createFont(name_and_file[1], name_and_file[0], custom_fonts);
+			createFont(name_and_file[0], name_and_file[1]);
 		}//for(name_and_file).
-
-		return custom_fonts;
 	}//loadFonts().
-	private static void createFont(String font_file_name, String font_name, HashMap<String, Font> custom_fonts)
+	protected void createFont(String font_name, String font_file_name)
 	{
-		CustomException.debug(class_name+".createFont(): ");//debug**
+		font_file_name = normalizePath(font_file_name);
+		HtmlConversionException.debug(class_name+".createFont(): ");//debug**
 		try
 		{
 			File font_file = new File(font_file_name);
-			CustomException.debug(" creating font '"+font_name+"' from '"+font_file_name+"'...");//debug**
+			HtmlConversionException.debug(" creating font '"+font_name+"' from '"+font_file_name+"'...");//debug**
 			Font font = Font.createFont(Font.TRUETYPE_FONT, font_file);
-			custom_fonts.put(font_name, font);
+			this.custom_fonts.put(font_name, font);
 		}//try.
 		catch(FontFormatException | IOException ioe)
 		{
 			log.severe(class_name+" IO Exception while trying to createFont '"+font_file_name+"':\n"+ioe);
 		}//catch().
 	}//createFont().
-	private static List<String[]> getFontConfigs()
+
+
+	public void convert(String html_string, OutputStream output_stream)
 	{
-		LinkedList<String[]> font_files = new LinkedList<String[]>();
-		List<String> file_lines  = StaticStuff.readFileLines("./fonts.json");
-		if(file_lines==null || file_lines.size()<=0)
-		{return font_files;}
 
-		for(String line: file_lines)
-		{
-			if(line.matches("^ *#.*"))//Comment line.
-			{continue;}
-			else if(!line.contains(":"))//Invalid line.
-			{continue;}
+//INLINE CSS
+		html_string = this.css_inliner.inline(html_string);		
 
-			String[] parts = line.split(":");
-			if(parts.length!=2)
-			{continue;}
-
-			String font_name = parts[0].replaceAll("[\",]+","").trim();
-			String font_file = parts[1].replaceAll("[\",]+","").trim();
-			font_files.add(new String[]{font_name, font_file});
-		}//for(line).
-		return font_files;
-	}//getFontConfigs().
-
-	public static String readFileToString(String file_path)
-	{
-		String xhtml_string="";
+//READ HTML
+		this.flattened_elements = new LinkedList<PDFElementProperties>();
 		try
 		{
-			xhtml_string = new String(Files.readAllBytes(Paths.get(file_path)), Charset.forName("UTF-8"));
+			PDFElementProperties top_element=readHTML(html_string);
+			flattenElements(top_element);
 		}//try.
-		catch(IOException ioe)
+		catch(HtmlConversionException ce)
 		{
-			System.out.println("SEVERE: "+class_name+" IO Exception while trying to read xhtml file:\n"+ioe);
-			return null;
+			ce.writeLog(log);
+			if(ce.severity<HtmlConversionException.WARNING)
+			{return;}
 		}//catch().
 
-		return xhtml_string;
-	}//readFileToString().
+//GENERATE IMAGE
+		try
+		{
+			generateImage(output_stream);
+		}//try.
+		catch(HtmlConversionException ce)
+		{
+			ce.writeLog(log);
+		}//catch().
+	}//convert().
+	
 
 
-	private static PDFElementProperties readXHTML(String xhtml_string, HashMap<String, Font> custom_fonts, GlobalDocVars doc_vars) throws CustomException
+	protected PDFElementProperties readHTML(String html_string) throws HtmlConversionException
 	{
-		CustomException.debug(class_name+".readXHTML(): ");//debug**
+		HtmlConversionException.debug(class_name+".readHTML(): ");//debug**
 
 		//Remove <head> since it's not relevant.
-		xhtml_string = Pattern.compile("<head>.*</head>", Pattern.DOTALL).matcher(xhtml_string).replaceAll("");
+		html_string = Pattern.compile("<head>.*</head>", Pattern.DOTALL).matcher(html_string).replaceAll("");
 
 		Pattern pattern = Pattern.compile("<[^<>]+>|<!--", Pattern.MULTILINE);
-		Matcher matcher = pattern.matcher(xhtml_string);
+		Matcher matcher = pattern.matcher(html_string);
 
 		int matches_count=0;
 		int open_tags_count=0;
@@ -230,13 +157,13 @@ public class HtmlToImageConverter
 			if(matcher.start()<comment_close_index)
 			{continue;}
 
-			//CustomException.debug(" matcher.group(): "+matcher.group());//debug**
+			//HtmlConversionException.debug(" matcher.group(): "+matcher.group());//debug**
 
 			if(matcher.group().startsWith("<!--") || matcher.group().contains("<!--"))
 			{
-			//	CustomException.debug(class_name+" comment matcher.group()="+matcher.group());//debug**
-				comment_close_index = xhtml_string.indexOf("-->",matcher.start())+3;
-			//	CustomException.debug(class_name+" comment start index="+matcher.start()+" comment close index="+comment_close_index);//debug**
+			//	HtmlConversionException.debug(class_name+" comment matcher.group()="+matcher.group());//debug**
+				comment_close_index = html_string.indexOf("-->",matcher.start())+3;
+			//	HtmlConversionException.debug(class_name+" comment start index="+matcher.start()+" comment close index="+comment_close_index);//debug**
 				continue;
 			}//if.
 
@@ -248,10 +175,10 @@ public class HtmlToImageConverter
 			previous_match=current_match;
 			current_match = new HtmlData(matcher.start(), matcher.end(), matcher.group());
 
-		//	CustomException.log_level=CustomException.DEBUG;
+		//	HtmlConversionException.log_level=HtmlConversionException.DEBUG;
 			if(previous_match!=null)
-			{lookForUnenclosedText(xhtml_string, Math.max(previous_match.end_index, comment_close_index), current_match.start_index, parent_element, custom_fonts);}
-		//	CustomException.log_level=CustomException.INFO;
+			{lookForUnenclosedText(html_string, Math.max(previous_match.end_index, comment_close_index), current_match.start_index, parent_element);}
+		//	HtmlConversionException.log_level=HtmlConversionException.INFO;
 
 			if(current_match.is_opening)
 			{
@@ -264,11 +191,8 @@ public class HtmlToImageConverter
 				}//if.
 				else
 				{current_match.setParent(null);}//Even if parent is null this needs to be called since this is when styling data is extracted.
-				//System.out.println("\n\nMatch sequence: "+current_match.matched_sequence);//debug**
-				//System.out.println("current_match.parent: "+current_match.parent);//debug**
-				//System.out.println("opening match styling: "+current_match.printStyling());//debug**
 
-				PDFElementProperties current_element = new PDFElementProperties(doc_vars, parent_element, current_match);
+				PDFElementProperties current_element = new PDFElementProperties(this.doc_vars, parent_element, current_match);
 
 				
 				if(current_match.opening_and_closing)
@@ -289,7 +213,7 @@ public class HtmlToImageConverter
 			//	System.out.println("\n");//debug**
 			
 				if(!parent_element.getTag().equals(current_match.getTag()))
-				{throw new CustomException(CustomException.SEVERE, class_name, "Closing tag '"+current_match.getTag()+"' doesn't match current element tag '"+parent_element.getTag()+"'!","Trying to extract data from xhtml.");}
+				{throw new HtmlConversionException(HtmlConversionException.SEVERE, class_name, "Closing tag '"+current_match.getTag()+"' doesn't match current element tag '"+parent_element.getTag()+"'!","Trying to extract data from html.");}
 
 				if(parent_element.parent==null)//This closing tag closes the Top Level Element.
 				{
@@ -304,7 +228,7 @@ public class HtmlToImageConverter
 
 		if(open_tags_count>0)
 		{
-			throw new CustomException(CustomException.SEVERE, class_name, "XHTML tags mismatch! Found more opening tags than closing tags.", "Trying to extract data from xhtml.");
+			throw new HtmlConversionException(HtmlConversionException.SEVERE, class_name, "HTML tags mismatch! Found more opening tags than closing tags.", "Trying to extract data from html.");
 		}//if.
 
 		if(matches_count<=0)
@@ -313,19 +237,19 @@ public class HtmlToImageConverter
 		parent_element.calculateAbsolutePositions(null);
 
 		return parent_element;
-	}//readXHTML().
+	}//readHTML().
 
-	private static void lookForUnenclosedText(String xhtml_string, int start_index, int end_index, PDFElementProperties parent_element, HashMap<String, Font>custom_fonts) throws CustomException
+	protected void lookForUnenclosedText(String html_string, int start_index, int end_index, PDFElementProperties parent_element) throws HtmlConversionException
 	{
-		CustomException.debug(" lookForUnenclosedText():");//debug**
-		String contained_text = xhtml_string.substring(start_index, end_index);
+		HtmlConversionException.debug(" lookForUnenclosedText():");//debug**
+		String contained_text = html_string.substring(start_index, end_index);
 		if(contained_text.trim().isEmpty())
 		{return;}
 
 		String font_family = parent_element.html_data.font_family;
 		double font_size = parent_element.getFontSize();
 
-		Font element_font = getElementFont(parent_element, custom_fonts);
+		Font element_font = getElementFont(parent_element);
 
 		String[] text_split = contained_text.trim().replaceAll(" {2,}"," ").split(" ");
 		String[][] text_words = new String[text_split.length][];
@@ -351,14 +275,14 @@ public class HtmlToImageConverter
 			total_words_width+=width;//debug**
 		}//for(word).
 
-		CustomException.debug(" total_words_width: "+total_words_width);//debug**
+		HtmlConversionException.debug(" total_words_width: "+total_words_width);//debug**
 
 		try
 		{parent_element.setText(text_words);}
-		catch(CustomException ce)
+		catch(HtmlConversionException ce)
 		{
 			System.out.println("EXCEPTION while trying to setText");//debug**
-			if(ce.severity==CustomException.SEVERE)
+			if(ce.severity==HtmlConversionException.SEVERE)
 			{throw ce;}
 			
 			ce.writeLog(log);
@@ -366,12 +290,12 @@ public class HtmlToImageConverter
 
 	}//lookForUnenclosedText().
 
-	private static void generateImage(LinkedList<PDFElementProperties> flattened_elements, String image_name, HashMap<String, Font>custom_fonts, GlobalDocVars doc_vars) throws CustomException
+	protected void generateImage(OutputStream output_stream) throws HtmlConversionException
 	{
-		int page_width = (int)doc_vars.getPageWidth();
-		int page_height = (int)doc_vars.getPageHeight();
+		int page_width = (int)this.doc_vars.getPageWidth();
+		int page_height = (int)this.doc_vars.getPageHeight();
 
-		CustomException.writeLog(CustomException.INFO, null, class_name+".generateImage(): page_width:"+page_width+" page_height:"+page_height);//INFO
+		HtmlConversionException.writeLog(HtmlConversionException.INFO, null, class_name+".generateImage(): page_width:"+page_width+" page_height:"+page_height);//INFO
 
 		//Create a blank image
 		BufferedImage output_image = new BufferedImage(page_width, page_height, BufferedImage.TYPE_INT_ARGB);
@@ -404,9 +328,9 @@ public class HtmlToImageConverter
 			else if(tag.equals("text"))
 			{
 				graphics.setColor(element.getColor());
-				Font element_font = getElementFont(element, custom_fonts);
+				Font element_font = getElementFont(element);
 				graphics.setFont(element_font);
-				CustomException.debug(" text element parent.tag: "+element.parent.parent.getTag());//debug**
+				HtmlConversionException.debug(" text element parent.tag: "+element.parent.parent.getTag());//debug**
 				int x_offset=0;
 				if(element.getText().startsWith("&bull;"))//List items
 				{
@@ -426,13 +350,13 @@ public class HtmlToImageConverter
 		graphics.dispose();
 
 		try
-		{ImageIO.write(output_image, "png", new File(image_name));}
+		{ImageIO.write(output_image, "png", output_stream);}
 		catch(IOException ioe)
-		{throw new CustomException(CustomException.SEVERE, class_name, "Trying to write image to file", ioe);}
+		{throw new HtmlConversionException(HtmlConversionException.SEVERE, class_name, "Trying to write image to file", ioe);}
 
 	}//generateImage().
 
-	private static void drawBorders(PDFElementProperties element, Graphics2D graphics)
+	protected void drawBorders(PDFElementProperties element, Graphics2D graphics)
 	{
 	/*	int top = (int)(element.absolute_top + (int)element.getBorderWidth("t")/2);
 		int left = (int)(element.absolute_left + (int)element.getBorderWidth("l")/2);
@@ -484,7 +408,7 @@ public class HtmlToImageConverter
 		}//if.
 	}//drawBorders().
 
-	private static void drawBullet(PDFElementProperties element, Graphics2D graphics)
+	protected void drawBullet(PDFElementProperties element, Graphics2D graphics)
 	{
 		int lx = (int)element.absolute_left;
 		int ty = (int)element.absolute_top;
@@ -496,39 +420,39 @@ public class HtmlToImageConverter
 		graphics.fillOval((int)bullet_x, (int)(bullet_y), (int)half_em, (int)half_em);
 	}//drawBullet().
 
-	private static Font getElementFont(PDFElementProperties element, HashMap<String, Font>custom_fonts)
+	protected Font getElementFont(PDFElementProperties element)
 	{
-		CustomException.debug("getElementFont():");//debug**
+		HtmlConversionException.debug("getElementFont():");//debug**
 
 		String font_family = element.getFontFamily();
 		String lower_case_family = font_family.toLowerCase();
 		int font_weight = interpretFontWeight(element.getFontWeight());
 		String text_decoration = element.getTextDecoration();
 		boolean italic = text_decoration.contains("italic");
-		if(font_weight>=1 && !lower_case_family.contains("bold") && custom_fonts.containsKey(font_family+"-Bold"))
+		if(font_weight>=1 && !lower_case_family.contains("bold") && this.custom_fonts.containsKey(font_family+"-Bold"))
 		{
 			font_family+="-Bold";
 			font_weight=0;//Might need to change this.
 		}//if.
-		if(italic && !lower_case_family.contains("italic") && custom_fonts.containsKey(font_family+"-Italic"))
+		if(italic && !lower_case_family.contains("italic") && this.custom_fonts.containsKey(font_family+"-Italic"))
 		{
 			font_family+="-Italic";
 			italic=false;//Might need to change this.
 		}//if.
 
-	//	CustomException.debug(" text_decoration: "+text_decoration+" color: "+element.getColor()+" style: "+font_style);//debug**
-		CustomException.debug(" font_size:"+element.getFontSize()+" font_family: "+font_family+" font_weight: "+font_weight+" text:"+element.getText());//debug**
+	//	HtmlConversionException.debug(" text_decoration: "+text_decoration+" color: "+element.getColor()+" style: "+font_style);//debug**
+		HtmlConversionException.debug(" font_size:"+element.getFontSize()+" font_family: "+font_family+" font_weight: "+font_weight+" text:"+element.getText());//debug**
 
 		Font base_font = null;
-		if(custom_fonts.containsKey(font_family))
+		if(this.custom_fonts.containsKey(font_family))
 		{
-			base_font = custom_fonts.get(font_family);
-			CustomException.debug(" using custom font '"+font_family+"'!");//debug**
+			base_font = this.custom_fonts.get(font_family);
+			HtmlConversionException.debug(" using custom font '"+font_family+"'!");//debug**
 		}//if.
 		else
 		{
 			base_font = new Font("Dialog", Font.PLAIN, (int)element.getFontSize());//default font.
-			CustomException.debug(" using default font!");//debug**
+			HtmlConversionException.debug(" using default font!");//debug**
 		}//else
 
 		Map<TextAttribute, Object> attributes = new java.util.HashMap<>(base_font.getAttributes());
@@ -549,7 +473,7 @@ public class HtmlToImageConverter
 		return element_font;
 	}//getElementFont().
 
-	private static int interpretFontWeight(int css_weight)
+	protected int interpretFontWeight(int css_weight)
 	{
 		if(css_weight>=700)
 		{return Font.BOLD;}
@@ -557,21 +481,7 @@ public class HtmlToImageConverter
 		return Font.PLAIN;
 	}//interpretFontWeight().
 
-	private static void flattenElements(LinkedList<PDFElementProperties> flattened_elements, PDFElementProperties base_element)
-	{
-		flattened_elements.add(base_element);
-		for(PDFElementProperties child: base_element.children)
-		{
-			flattenElements(flattened_elements, child);
-		}//for(child).
-		for(PDFElementProperties child: base_element.fixed_children_elements)
-		{
-			flattenElements(flattened_elements, child);
-		}//for(child.)
-
-	}//flattenElements().
-
-	private static void generateExampleImage() throws CustomException
+/*	public static void generateExampleImage() throws HtmlConversionException
 	{
 		int width = 400;
 		int height = 300;
@@ -594,14 +504,14 @@ public class HtmlToImageConverter
 		graphics.fillRect(200, 40, 100, 100);         // x, y, width, height
 
 		//setStroke options
-	/*	graphics.setStroke(new BasicStroke(
-		    2f,                             // thickness
-		    BasicStroke.CAP_ROUND,         // end cap style
-		    BasicStroke.JOIN_MITER,        // corner join style
-		    10f,                            // miter limit
-		    new float[] {10f, 5f},          // dash pattern: 10px dash, 5px gap
-		    0f                              // dash phase offset
-		));*/
+		//	graphics.setStroke(new BasicStroke(
+		//	    2f,                             // thickness
+		//	    BasicStroke.CAP_ROUND,         // end cap style
+		//	    BasicStroke.JOIN_MITER,        // corner join style
+		//	    10f,                            // miter limit
+		//	    new float[] {10f, 5f},          // dash pattern: 10px dash, 5px gap
+		//	    0f                              // dash phase offset
+		//	));
 
 
 		// Draw something (e.graphics. a red circle)
@@ -618,8 +528,8 @@ public class HtmlToImageConverter
 		try
 		{ImageIO.write(image, "png", new File("example.png"));}
 		catch(IOException ioe)
-		{throw new CustomException(CustomException.SEVERE, class_name, "Trying to write image to file", ioe);}
-	}//generateExampleImage().
+		{throw new HtmlConversionException(HtmlConversionException.SEVERE, class_name, "Trying to write image to file", ioe);}
+	}//generateExampleImage().*/
 
 
 }//class HtmlToImageConverter.

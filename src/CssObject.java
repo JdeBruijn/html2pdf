@@ -19,11 +19,11 @@ public class CssObject
 		// System.out.println("CssObject class_name="+class_name);//debug**
 	}// constructor().
 
-	public void addParameter(String parameter_line) throws CustomException
+	public void addParameter(String parameter_line) throws HtmlConversionException
 	{
 		String[] param_data = parameter_line.split(":");
 		if(param_data.length<=1)
-		{throw new CustomException(CustomException.WARNING, class_name+".addParameter()","Invalid parameter_line '"+parameter_line+"'. Expected format: param_name: param_value;", "Trying to add css parameter to '"+this.name+"'");}
+		{throw new HtmlConversionException(HtmlConversionException.WARNING, class_name+".addParameter()","Invalid parameter_line '"+parameter_line+"'. Expected format: param_name: param_value;", "Trying to add css parameter to '"+this.name+"'");}
 
 		String param_name = param_data[0].trim();
 		

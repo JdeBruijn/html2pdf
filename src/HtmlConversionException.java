@@ -10,9 +10,9 @@ import java.util.logging.Logger;
 import java.io.StringWriter;
 import java.io.PrintWriter;
 
-public class CustomException extends Exception
+public class HtmlConversionException extends Exception
 {
-	private static final String class_name="CustomException";
+	private static final String class_name="HtmlConversionException";
 	private static final Logger log = Logger.getLogger(class_name);
 
 	public static final int SEVERE=1;
@@ -34,7 +34,7 @@ public class CustomException extends Exception
 
 	public int severity = 1;
 
-	public CustomException(int severity, String error_class_name, String code_description, Throwable exception)
+	public HtmlConversionException(int severity, String error_class_name, String code_description, Throwable exception)
 	{
 		super(exception.getClass()+" in "+error_class_name+". Code description= "+code_description, exception);
 		this.severity=severity;
@@ -44,7 +44,7 @@ public class CustomException extends Exception
 		this.error_message=exception.getClass().toString();
 	}//constructor().
 
-	public CustomException(int severity, String error_class_name, String error_message, String code_description)
+	public HtmlConversionException(int severity, String error_class_name, String error_message, String code_description)
 	{
 		super(error_message+" in "+error_class_name+". Code description= "+code_description);
 		this.severity=severity;
@@ -129,7 +129,7 @@ public class CustomException extends Exception
 	}//writeLog().
 
 
-}//class CustomException.
+}//class HtmlConversionException.
 
 
 

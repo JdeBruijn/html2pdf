@@ -21,6 +21,10 @@ There are more instructions in *fonts.json* on how to add your font.
 Check out the sample HTML, CSS and generated PDF files in the **sample** folder for an example
 of what this program can do.
 
+### Html to Image
+Html2Pdf can also convert Html directly to PNG!
+All the same features are supported in both conversion to PDF and PNG.
+
 
 ## Installation
 Clone the repo or download the .zip file and extract it.

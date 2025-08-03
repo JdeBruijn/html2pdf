@@ -15,4 +15,8 @@ then
 	exit 1
 fi
 
-java -cp "$jars.:./classes/"  HtmlToImageConverter $1 $2
+#output_format="$1";
+
+#java -cp "$jars.:./classes/" $output_format $2 $3
+
+java -cp "$jars.:./classes/" Main "png" $1 $2

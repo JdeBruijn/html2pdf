@@ -56,16 +56,16 @@ public class CssInliner
 
 	public CssInliner(String css_filename)
 	{
-		CustomException.writeLog(CustomException.DEBUG, null, class_name+".constructor():");//debug**
+		HtmlConversionException.writeLog(HtmlConversionException.DEBUG, null, class_name+".constructor():");//debug**
 
 		if(default_styling_file!=null)
 		{readCss(default_styling_file);}
 		if(css_filename!=null && !css_filename.trim().isEmpty())
 		{readCss(css_filename);}
 
-		CustomException.writeLog(CustomException.DEBUG, null, "css_tags:\n"+StaticStuff.printHashMap(this.css_tags));//debug**
-		CustomException.writeLog(CustomException.DEBUG, null, "css_classes:\n"+StaticStuff.printHashMap(this.css_classes));//debug**
-		CustomException.writeLog(CustomException.DEBUG, null, "css_ids:\n"+StaticStuff.printHashMap(this.css_ids));//debug**
+		HtmlConversionException.writeLog(HtmlConversionException.DEBUG, null, "css_tags:\n"+StaticStuff.printHashMap(this.css_tags));//debug**
+		HtmlConversionException.writeLog(HtmlConversionException.DEBUG, null, "css_classes:\n"+StaticStuff.printHashMap(this.css_classes));//debug**
+		HtmlConversionException.writeLog(HtmlConversionException.DEBUG, null, "css_ids:\n"+StaticStuff.printHashMap(this.css_ids));//debug**
 	}//constructor().
 
 	private void readCss(String css_filename)
@@ -82,7 +82,7 @@ public class CssInliner
 
 	private void processCss(String css_string)
 	{
-	//	CustomException.writeLog(CustomException.DEBUG, null, class_name+".processCss():");//debug**
+	//	HtmlConversionException.writeLog(HtmlConversionException.DEBUG, null, class_name+".processCss():");//debug**
 
 		//Remove all comments.
 		css_string = Pattern.compile("/\\*.*\\*/", Pattern.DOTALL).matcher(css_string).replaceAll("");
@@ -110,8 +110,8 @@ public class CssInliner
 				log.warning(class_name+".processCss(): body is blank? matched sequence: '"+matcher.group()+"'");
 				return;
 			}//if.
-		//	CustomException.writeLog(CustomException.DEBUG, null, " name:"+name);//debug**
-		//	CustomException.writeLog(CustomException.DEBUG, null, " css_parameters:"+Arrays.toString(css_parameters));//debug**
+		//	HtmlConversionException.writeLog(HtmlConversionException.DEBUG, null, " name:"+name);//debug**
+		//	HtmlConversionException.writeLog(HtmlConversionException.DEBUG, null, " css_parameters:"+Arrays.toString(css_parameters));//debug**
 
 			for(String param_data: css_parameters)
 			{
@@ -120,7 +120,7 @@ public class CssInliner
 
 				try
 				{css_object.addParameter(param_data);}
-				catch(CustomException ce)
+				catch(HtmlConversionException ce)
 				{ce.writeLog(log);}
 			}//for(param_data).
 
@@ -137,7 +137,7 @@ public class CssInliner
 
 	public String inline(String html)
 	{
-		CustomException.writeLog(CustomException.DEBUG, null, class_name+".inline():");//debug**
+		HtmlConversionException.writeLog(HtmlConversionException.DEBUG, null, class_name+".inline():");//debug**
 		StringBuilder css_html = new StringBuilder();
 
 		html = html.replaceAll("\n", "");
@@ -160,7 +160,7 @@ public class CssInliner
 
 			if (line.equals("</body"))
 			{finished = true;}
-			CustomException.writeLog(CustomException.DEBUG, null, " line="+line);//debug**
+			HtmlConversionException.writeLog(HtmlConversionException.DEBUG, null, " line="+line);//debug**
 			if (finished || line.charAt(1) == '/')
 			{
 				css_html.append(line + ">\n");
@@ -182,38 +182,38 @@ public class CssInliner
 			}//if.
 
 			
-			CustomException.writeLog(CustomException.DEBUG, null, " original line="+line);//debug**
+			HtmlConversionException.writeLog(HtmlConversionException.DEBUG, null, " original line="+line);//debug**
 			String tag="";
 			try
 			{tag = StaticStuff.findFirstMatch(line, "<[^ ]+").replace("<","");}
-			catch(CustomException ce)
+			catch(HtmlConversionException ce)
 			{
 				ce.setCodeDescription("Trying to get html element tag");
-				ce.severity=CustomException.SEVERE;
+				ce.severity=HtmlConversionException.SEVERE;
 				ce.writeLog(log);
 			}//catch().
 
 			String id = "";
 			try
 			{id = StaticStuff.findFirstMatchWithDefaultValue(line, "id *= *\"[^\"]+", "").replaceAll("id *= *\"","").trim();}
-			catch(CustomException ce)
+			catch(HtmlConversionException ce)
 			{
 				ce.setCodeDescription("Trying to get html element id");
-				ce.severity=CustomException.DEBUG;
+				ce.severity=HtmlConversionException.DEBUG;
 				ce.writeLog(null);
 			}//catch().
 
 			String classes = "";
 			try
 			{classes = StaticStuff.findFirstMatchWithDefaultValue(line, "class *= *\"[^\"]+", "").replaceAll("class *= *\"","").trim();}
-			catch(CustomException ce)
+			catch(HtmlConversionException ce)
 			{
 				ce.setCodeDescription("Trying to get html element class");
-				ce.severity=CustomException.DEBUG;
+				ce.severity=HtmlConversionException.DEBUG;
 				ce.writeLog(null);
 			}//catch().
 
-			CustomException.writeLog(CustomException.DEBUG, null, "tag: "+tag+" id: "+id+" classes: "+classes);//debug**
+			HtmlConversionException.writeLog(HtmlConversionException.DEBUG, null, "tag: "+tag+" id: "+id+" classes: "+classes);//debug**
 
 			inline_styling=null;
 			style_indexes = null;
@@ -231,7 +231,7 @@ public class CssInliner
 
 			String all_styling = getCssStyles(tag, id, classes);
 
-			CustomException.writeLog(CustomException.DEBUG, null, " all_styling: "+all_styling);//debug**
+			HtmlConversionException.writeLog(HtmlConversionException.DEBUG, null, " all_styling: "+all_styling);//debug**
 
 			if(style_indexes!=null)
 			{line_new.append(line.substring(0, style_indexes[0]));}
@@ -248,7 +248,7 @@ public class CssInliner
 			css_html.append(line_new);
 
 		}//for(line).
-		//CustomException.writeLog(CustomException.DEBUG, null, class_name+".inline() css_html="+css_html.toString());//debug**
+		//HtmlConversionException.writeLog(HtmlConversionException.DEBUG, null, class_name+".inline() css_html="+css_html.toString());//debug**
 		return css_html.toString();
 	}//inline().
 

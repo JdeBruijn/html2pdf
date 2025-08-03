@@ -216,7 +216,7 @@ public class StaticStuff
 		return true;
 	}//validSession().*/
 
-	public static String inputStreamToString(InputStream input) throws CustomException
+	public static String inputStreamToString(InputStream input) throws HtmlConversionException
 	{
 		String text = new BufferedReader(new InputStreamReader(input)).lines().collect(Collectors.joining("\n"));
 		return text;
@@ -345,11 +345,11 @@ public class StaticStuff
 
 
 	//Example: findFirstMatch("foobar bar foo", "fo+", Pattern.MULTILINE).
-	public static String findFirstMatch(String source, String regex, Integer pattern_option) throws CustomException
+	public static String findFirstMatch(String source, String regex, Integer pattern_option) throws HtmlConversionException
 	{
 		if(source==null || regex==null || regex.trim().isEmpty())
 		{
-			throw new CustomException(CustomException.SEVERE, class_name+".findFirstMatch()","'source' and 'regex' must both be defined!", "Trying to get last match");
+			throw new HtmlConversionException(HtmlConversionException.SEVERE, class_name+".findFirstMatch()","'source' and 'regex' must both be defined!", "Trying to get last match");
 		}//if.
 		if(source.trim().isEmpty())
 		{return "";}
@@ -369,12 +369,12 @@ public class StaticStuff
 		return result;
 	}//findFirstMatch();
 
-	public static String findFirstMatch(String source, String regex) throws CustomException
+	public static String findFirstMatch(String source, String regex) throws HtmlConversionException
 	{
 		return findFirstMatch(source, regex, null);
 	}//findFirstMatch().
 
-	public static String findFirstMatchWithDefaultValue(String source, String regex, String default_value) throws CustomException
+	public static String findFirstMatchWithDefaultValue(String source, String regex, String default_value) throws HtmlConversionException
 	{
 		String match = findFirstMatch(source, regex, null);
 		if(match.isEmpty())
@@ -384,13 +384,13 @@ public class StaticStuff
 	}//findFirstMatchWithDefaultValue().
 
 	//Example: findMatches("foobar bar foo", "fo+", Pattern.MULTILINE).
-	public static LinkedList<String> findMatches(String source, String regex, Integer pattern_option) throws CustomException
+	public static LinkedList<String> findMatches(String source, String regex, Integer pattern_option) throws HtmlConversionException
 	{
 		LinkedList<String> results = new LinkedList<String>();
 
 		if(source==null || regex==null || regex.trim().isEmpty())
 		{
-			throw new CustomException(CustomException.SEVERE, class_name+".findLastMatchWithDefaultValue()","'source' and 'regex' must both be defined!", "Trying to get last match");
+			throw new HtmlConversionException(HtmlConversionException.SEVERE, class_name+".findLastMatchWithDefaultValue()","'source' and 'regex' must both be defined!", "Trying to get last match");
 		}//if.
 		if(source.trim().isEmpty())
 		{return results;}
@@ -409,16 +409,16 @@ public class StaticStuff
 		return results;
 	}//findMatches().
 
-	public static LinkedList<String> findMatches(String source, String regex) throws CustomException
+	public static LinkedList<String> findMatches(String source, String regex) throws HtmlConversionException
 	{
 		return findMatches(source, regex, null);
 	}//findMatches().
 
-	public static String findLastMatch(String source, String regex, Integer pattern_option) throws CustomException
+	public static String findLastMatch(String source, String regex, Integer pattern_option) throws HtmlConversionException
 	{
 		if(source==null || regex==null || regex.trim().isEmpty())
 		{
-			throw new CustomException(CustomException.SEVERE, class_name,"'source' and 'regex' must both be defined!", "Trying to get last match");
+			throw new HtmlConversionException(HtmlConversionException.SEVERE, class_name,"'source' and 'regex' must both be defined!", "Trying to get last match");
 		}//if.
 		if(source.trim().isEmpty())
 		{return "";}
@@ -430,10 +430,10 @@ public class StaticStuff
 		return results.get(results.size()-1);
 	}//findLastMatch().
 
-	public static String findLastMatch(String source, String regex) throws CustomException
+	public static String findLastMatch(String source, String regex) throws HtmlConversionException
 	{return findLastMatch(source, regex, null);}
 
-	public static String findLastMatchWithDefaultValue(String source, String regex, String default_value, Integer pattern_option) throws CustomException
+	public static String findLastMatchWithDefaultValue(String source, String regex, String default_value, Integer pattern_option) throws HtmlConversionException
 	{
 		if(source==null || source.trim().isEmpty())
 		{return default_value;}
@@ -445,7 +445,7 @@ public class StaticStuff
 		return last_match;
 	}//findLastMatchWithDefaultValue().
 
-	public static String findLastMatchWithDefaultValue(String source, String regex, String default_value) throws CustomException
+	public static String findLastMatchWithDefaultValue(String source, String regex, String default_value) throws HtmlConversionException
 	{return findLastMatchWithDefaultValue(source, regex, default_value, null);}
 
 

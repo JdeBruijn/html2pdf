@@ -199,7 +199,7 @@ public class HtmlData
 		String tag_match="";
 		try
 		{tag_match = StaticStuff.findFirstMatch(this.matched_sequence, "</?[^ ]+");}
-		catch(CustomException ce)
+		catch(HtmlConversionException ce)
 		{ce.writeLog(log);}
 
 		if(tag_match!="")
@@ -231,8 +231,8 @@ public class HtmlData
 			return;
 		}//if.
 
-		CustomException.debug(class_name+".setParent(): this.tag="+this.tag);//debug**
-	//	CustomException.debug(class_name+".setParent(): parent="+parent);//debug**
+		HtmlConversionException.debug(class_name+".setParent(): this.tag="+this.tag);//debug**
+	//	HtmlConversionException.debug(class_name+".setParent(): parent="+parent);//debug**
 
 		this.parent=parent;
 		//copyParentStyleProperties();
@@ -241,8 +241,8 @@ public class HtmlData
 
 		if(this.getTag().equals("th") || this.getTag().equals("td"))
 		{extractColspan();}
-		CustomException.debug(class_name+".setParent(): matched_sequence: "+this.matched_sequence);//debug**
-		CustomException.debug(" "+this.printStyling());//debug**
+		HtmlConversionException.debug(class_name+".setParent(): matched_sequence: "+this.matched_sequence);//debug**
+		HtmlConversionException.debug(" "+this.printStyling());//debug**
 	}//setParent().
 
 	public String getTag()
@@ -256,7 +256,7 @@ public class HtmlData
 		String style_match="";
 		try
 		{style_match = StaticStuff.findLastMatch(this.matched_sequence, "style *= *\"[^\"]+\"", Pattern.MULTILINE);}
-		catch(CustomException ce)
+		catch(HtmlConversionException ce)
 		{ce.writeLog(log);}
 
 		//System.out.println(class_name+".extractStyleString(): this:"+this.toString());//debug**
@@ -268,7 +268,7 @@ public class HtmlData
 
 	private void extractStyleProperties()
 	{
-	//	CustomException.log_level=CustomException.DEBUG;
+	//	HtmlConversionException.log_level=HtmlConversionException.DEBUG;
 		if(this.style_string==null)
 		{this.style_string="";}//If no styling defined for this element then still copy parent styling.
 
@@ -330,20 +330,20 @@ public class HtmlData
 			{default_color=Color.BLUE;}
 
 	//		System.out.println();//debug**
-	//		CustomException.debug(class_name+".extractStyleProperties(): matched_sequence: "+this.matched_sequence);//debug**
-	//		CustomException.debug(" style_fg_color: "+style_fg_color+" parent.fg_color: "+parent.fg_color+" default_color: "+default_color);//debug**
+	//		HtmlConversionException.debug(class_name+".extractStyleProperties(): matched_sequence: "+this.matched_sequence);//debug**
+	//		HtmlConversionException.debug(" style_fg_color: "+style_fg_color+" parent.fg_color: "+parent.fg_color+" default_color: "+default_color);//debug**
 			if(style_fg_color.trim().equals("inherit"))
 			{this.fg_color=parent.fg_color;}
 			else
 			{this.fg_color = extractColor(style_fg_color, default_color);}
 		}//try.
-		catch(CustomException ce)
+		catch(HtmlConversionException ce)
 		{
 			ce.setCodeDescription("Trying to extract 'color' from style_string");
 			ce.writeLog(log);
 			this.fg_color=parent.fg_color;
 		}//catch().
-	//	CustomException.debug(" final fg_colour: "+this.fg_color.toString());//debug**
+	//	HtmlConversionException.debug(" final fg_colour: "+this.fg_color.toString());//debug**
 
 	//Background Color
 		try
@@ -355,7 +355,7 @@ public class HtmlData
 			else
 			{this.background_color = extractColor(style_bg_color, parent.background_color);}
 		}//try.
-		catch(CustomException ce)
+		catch(HtmlConversionException ce)
 		{
 			ce.setCodeDescription("Trying to extract 'background-color' from style_string");
 			ce.writeLog(log);
@@ -382,7 +382,7 @@ public class HtmlData
 		String match=parent.position;
 		try
 		{match = StaticStuff.findLastMatch(this.style_string, "position *:[^;\"]+");}
-		catch(CustomException ce)
+		catch(HtmlConversionException ce)
 		{
 			ce.setCodeDescription("Trying to extract 'position' from style_string");
 			ce.writeLog(log);
@@ -401,7 +401,7 @@ public class HtmlData
 		match="";
 		try
 		{match = StaticStuff.findLastMatchWithDefaultValue(this.style_string, "float *:[^;\"]+","").replaceAll("float *: *","").trim();}
-		catch(CustomException ce)
+		catch(HtmlConversionException ce)
 		{
 			ce.setCodeDescription("Trying to get 'float' from style_string");
 			ce.writeLog(log);
@@ -457,7 +457,7 @@ public class HtmlData
 		String match="";
 		try
 		{match = StaticStuff.findLastMatchWithDefaultValue(this.style_string, "display *:[^;\"]+","").replaceAll("display *: *","").trim();}
-		catch(CustomException ce)
+		catch(HtmlConversionException ce)
 		{
 			ce.setCodeDescription("Trying to extract 'display' from style_string");
 			ce.writeLog(log);
@@ -481,24 +481,24 @@ public class HtmlData
 
 	private void extractFontData()
 	{
-	//	CustomException.log_level=CustomException.DEBUG;
-	//	CustomException.debug(class_name+".extractFontData(): matched_sequence: "+this.matched_sequence);//debug**
-	//	CustomException.debug(" tag: "+this.getTag());//debug**
+	//	HtmlConversionException.log_level=HtmlConversionException.DEBUG;
+	//	HtmlConversionException.debug(class_name+".extractFontData(): matched_sequence: "+this.matched_sequence);//debug**
+	//	HtmlConversionException.debug(" tag: "+this.getTag());//debug**
 
 	//Font Size
 		String font_size_str="";
 		try
 		{
 			font_size_str = StaticStuff.findLastMatchWithDefaultValue(this.style_string, "font-size *: *[0-9.]+(em)?", String.valueOf(parent.font_size)).replaceAll("font-size *: *","");
-	//		CustomException.debug(" font_size_str: "+font_size_str);//debug**
+	//		HtmlConversionException.debug(" font_size_str: "+font_size_str);//debug**
 			this.font_size=Double.parseDouble(font_size_str.replaceAll("[^0-9.]+",""));
 			if(font_size_str.matches("[0-9]+\\.?[0-9]*em"))
 			{
 				this.font_size = StaticStuff.roundTo(parent.font_size*this.font_size,2);//Use 'this.font_size' as a multiplier instead.
 			}//if.
-	//		CustomException.debug(" this.font_size: "+this.font_size);//debug**
+	//		HtmlConversionException.debug(" this.font_size: "+this.font_size);//debug**
 		}//try.
-		catch(CustomException ce)
+		catch(HtmlConversionException ce)
 		{
 			ce.setCodeDescription("Trying to extract 'font-size' from style_string");
 			ce.writeLog(log);
@@ -516,7 +516,7 @@ public class HtmlData
 		{
 			decoration = StaticStuff.findLastMatchWithDefaultValue(this.style_string, "text-decoration *: *[^;\"]+","").replaceAll("text-decoration *: *","").trim();
 		}//try.
-		catch(CustomException ce)
+		catch(HtmlConversionException ce)
 		{
 			ce.setCodeDescription("Trying to extract 'text-decoration' from style_string");
 			ce.writeLog(log);
@@ -535,28 +535,28 @@ public class HtmlData
 			if(this.getTag().equals("a") && !this.text_decoration.contains("underline"))//italic
 			{this.text_decoration+=" underline";}
 		}//if.
-	//	CustomException.debug(" text_decoration: "+this.text_decoration);//debug**
+	//	HtmlConversionException.debug(" text_decoration: "+this.text_decoration);//debug**
 
 
 	//Font Family.
 		try
 		{this.font_family = StaticStuff.findLastMatchWithDefaultValue(this.style_string, "font-family *: *[^;\"]+", parent.font_family).replaceAll("font-family *: *+","").trim();}
-		catch(CustomException ce)
+		catch(HtmlConversionException ce)
 		{
 			ce.setCodeDescription("Trying to extract 'font-family' from style_string");
 			ce.writeLog(log);
 		}//catch().
 		if(this.font_family.trim().isEmpty())
 		{this.font_family=parent.font_family;}
-	//	CustomException.debug(" parent.font_family: "+this.parent.font_family);//debug**
-	//	CustomException.debug(" font_family: "+this.font_family);//debug**
+	//	HtmlConversionException.debug(" parent.font_family: "+this.parent.font_family);//debug**
+	//	HtmlConversionException.debug(" font_family: "+this.font_family);//debug**
 
 
 	//Font Weight.
 		String font_weight_style="";
 		try
 		{font_weight_style = StaticStuff.findLastMatch(this.style_string, "font-weight *: *[^;\"]+").replaceAll("font-weight *: *","");}
-		catch(CustomException ce)
+		catch(HtmlConversionException ce)
 		{
 			ce.setCodeDescription("Trying to extract 'font-weight' from style_string");
 			ce.writeLog(log);
@@ -605,7 +605,7 @@ public class HtmlData
 			if(this.text_align.isEmpty())
 			{this.text_align=parent.text_align;}
 		}//try.
-		catch(CustomException ce)
+		catch(HtmlConversionException ce)
 		{
 			ce.setCodeDescription("trying to extract text-align property");
 			ce.writeLog(log);
@@ -616,11 +616,11 @@ public class HtmlData
 		try
 		{
 			this.white_space = StaticStuff.findLastMatchWithDefaultValue(this.style_string, "white-space *: *[^;\"]+", String.valueOf(parent.white_space)).replaceAll("white-space *: *","").trim();
-			//CustomException.debug(class_name+".extractTextProperties(): this.white_space: "+this.white_space);//debug**
+			//HtmlConversionException.debug(class_name+".extractTextProperties(): this.white_space: "+this.white_space);//debug**
 			if(this.white_space.isEmpty())
 			{this.white_space=parent.white_space;}
 		}//try.
-		catch(CustomException ce)
+		catch(HtmlConversionException ce)
 		{
 			ce.setCodeDescription("trying to extract white_space property");
 			ce.writeLog(log);
@@ -645,7 +645,7 @@ public class HtmlData
 			value = StaticStuff.findLastMatch(this.style_string, property_name+" *:[^;\"]+");
 			value = StaticStuff.findFirstMatch(value, "[0-9]+\\.?[0-9]*(%|em)?|-1");
 		}//try.
-		catch(CustomException ce)
+		catch(HtmlConversionException ce)
 		{
 			ce.setCodeDescription("Trying to extract '"+property_name+"' from style_string");
 			ce.writeLog(log);
@@ -683,19 +683,19 @@ public class HtmlData
 
 	private void extractBorderData()
 	{
-	//	CustomException.debug("\nextractBorderData(): this.tag: "+this.getTag());
+	//	HtmlConversionException.debug("\nextractBorderData(): this.tag: "+this.getTag());
 
 		String[] all_borders_data = extractBorderDataHelper("","0");//debug**
 
 		//Turns out border data is not normally automatically inherited.
 		String[] top_border_data = extractBorderDataHelper("-top", String.valueOf(parent.border_top_width));
-	//	CustomException.debug(" top_border_data: "+Arrays.toString(top_border_data));//debug**
+	//	HtmlConversionException.debug(" top_border_data: "+Arrays.toString(top_border_data));//debug**
 		String[] right_border_data = extractBorderDataHelper("-right", String.valueOf(parent.border_right_width));
-	//	CustomException.debug(" right_border_data: "+Arrays.toString(right_border_data));//debug**
+	//	HtmlConversionException.debug(" right_border_data: "+Arrays.toString(right_border_data));//debug**
 		String[] bottom_border_data = extractBorderDataHelper("-bottom", String.valueOf(parent.border_bottom_width));
-	//	CustomException.debug(" bottom_border_data: "+Arrays.toString(bottom_border_data));//debug**
+	//	HtmlConversionException.debug(" bottom_border_data: "+Arrays.toString(bottom_border_data));//debug**
 		String[] left_border_data = extractBorderDataHelper("-left", String.valueOf(parent.border_left_width));
-	//	CustomException.debug(" left_border_data: "+Arrays.toString(left_border_data));//debug**
+	//	HtmlConversionException.debug(" left_border_data: "+Arrays.toString(left_border_data));//debug**
 
 		if(!all_borders_data[0].equals("0"))//'0' means no value was found when looking for 'border:'. 'none' means 'border:' was explicitly set to 'none' or '0'.
 		{
@@ -734,7 +734,7 @@ public class HtmlData
 		String match_value="";
 		try
 		{match_value = StaticStuff.findLastMatch(this.style_string, "border"+side+" *:[^;\"]+").replaceAll("border"+side+" *:","").trim();}
-		catch(CustomException ce)
+		catch(HtmlConversionException ce)
 		{
 			ce.setCodeDescription("Trying to extract 'border"+side+"' from style_string");
 			ce.writeLog(log);
@@ -773,7 +773,7 @@ public class HtmlData
 
 	private String[] getTableDefaultBorders(String side)
 	{
-	//	CustomException.debug(" getTableDefaultBorders(): side: "+side);
+	//	HtmlConversionException.debug(" getTableDefaultBorders(): side: "+side);
 		if(this.getTag().equals("table") && (side.endsWith("top") || side.endsWith("left")))
 		{return new String[] {"1", "solid", "black"};}
 
@@ -804,7 +804,7 @@ public class HtmlData
 		String style_all_margins="";
 		try
 		{style_all_margins = StaticStuff.findLastMatch(this.style_string, "margin *:[^;\"]+").replaceAll("margin *:","").trim();}
-		catch(CustomException ce)
+		catch(HtmlConversionException ce)
 		{
 			ce.setCodeDescription("Trying to get 'margin'");
 			ce.writeLog(log);
@@ -865,7 +865,7 @@ public class HtmlData
 		String style_all_paddings="";
 		try
 		{style_all_paddings = StaticStuff.findLastMatch(this.style_string, "padding *:[^;\"]+").replaceAll("padding *:","").trim();}
-		catch(CustomException ce)
+		catch(HtmlConversionException ce)
 		{
 			ce.setCodeDescription("Trying to get 'padding'");
 			ce.writeLog(log);
@@ -932,7 +932,7 @@ public class HtmlData
 				{this.colspan=colspan_int;}
 			}//if.
 		}//try.
-		catch(CustomException ce)
+		catch(HtmlConversionException ce)
 		{
 			ce.setCodeDescription("Trying to extractColspan");
 			ce.writeLog(log);
@@ -945,10 +945,10 @@ public class HtmlData
 		{
 			return StaticStuff.findFirstMatchWithDefaultValue(input, "^[0-9]+\\.?[0-9]*(%|em)?","0");
 		}//try.
-		catch(CustomException ce)
+		catch(HtmlConversionException ce)
 		{
 			ce.setCodeDescription("numbersAndPercent()");
-			ce.severity=CustomException.SEVERE;
+			ce.severity=HtmlConversionException.SEVERE;
 			ce.writeLog(log);
 			return "0";
 		}//catch().
@@ -998,7 +998,7 @@ public class HtmlData
 		String href_match="";
 		try
 		{href_match = StaticStuff.findLastMatch(this.matched_sequence, "href *= *\"[^\"]+", Pattern.MULTILINE);}
-		catch(CustomException ce)
+		catch(HtmlConversionException ce)
 		{ce.writeLog(log);}
 
 		if(href_match!="")
@@ -1014,7 +1014,7 @@ public class HtmlData
 		String src_match="";
 		try
 		{src_match = StaticStuff.findLastMatch(this.matched_sequence, "src *= *\"[^\"]+", Pattern.MULTILINE);}
-		catch(CustomException ce)
+		catch(HtmlConversionException ce)
 		{ce.writeLog(log);}
 
 		if(src_match!="")
