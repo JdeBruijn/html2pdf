@@ -1,5 +1,4 @@
 
-import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.List;
@@ -53,7 +52,7 @@ public class HtmlToPdfConverter extends HtmlConverter
 	public HtmlToPdfConverter(String base_path, String css_path, List<String[]> font_files, Double space_m_sizing, double output_width, double output_height)
 	{
 		setBasePath(base_path);//Used for finding location of things like images.
-		HtmlConversionException.debug(class_name+".main(): base_path: "+this.doc_vars.base_path);//debug**
+		log.debug(class_name+".main(): base_path: "+this.doc_vars.base_path);//debug**
 
 		if(css_path!=null && !css_path.trim().isEmpty())
 		{css_path = normalizePath(css_path);}
@@ -86,7 +85,7 @@ public class HtmlToPdfConverter extends HtmlConverter
 	}//loadFonts().
 	private void createBaseFont(String font_name, String font_file_name)
 	{
-		HtmlConversionException.debug(class_name+".createBaseFont(): ");//debug**
+	//	log.debug(class_name+".createBaseFont(): ");//debug**
 
 		String font_encoding=BaseFont.IDENTITY_H;
 		if(font_file_name.equals(font_name))//inbuilt font.
@@ -96,17 +95,17 @@ public class HtmlToPdfConverter extends HtmlConverter
 
 		try
 		{
-			HtmlConversionException.debug(" creating font '"+font_name+"' from '"+font_file_name+"'...");//debug**
+	//		log.debug(" creating font '"+font_name+"' from '"+font_file_name+"'...");//debug**
 			BaseFont base_font = BaseFont.createFont(
 	            font_file_name, // e.g., "fonts/Roboto-Regular.ttf"
 	            font_encoding,     // for full Unicode support
 	            BaseFont.EMBEDDED        // embed font in the PDF
 	        );
 	        this.custom_fonts.put(font_name, base_font);
-	        HtmlConversionException.debug(" base_font:"
-	        	+ "\n\tencoding: "+base_font.getEncoding() 
-	        	+ "\n\tfontType: "+base_font.getFontType() 
-	        	+ "\n\tembedded: "+base_font.isEmbedded());//debug**
+	//        log.debug(" base_font:"
+	//       	+ "\n\tencoding: "+base_font.getEncoding() 
+	//        	+ "\n\tfontType: "+base_font.getFontType() 
+	//        	+ "\n\tembedded: "+base_font.isEmbedded());//debug**
 		}//try.
 		catch(IOException ioe)
 		{
@@ -151,7 +150,7 @@ public class HtmlToPdfConverter extends HtmlConverter
 
 	private PDFElementProperties readHTML(String html_string) throws HtmlConversionException
 	{
-		HtmlConversionException.debug(class_name+".readHTML(): ");//debug**
+		log.debug(class_name+".readHTML(): ");//debug**
 
 		//Remove <head> since it's not relevant.
 		html_string = Pattern.compile("<head>.*</head>", Pattern.DOTALL).matcher(html_string).replaceAll("");
@@ -172,13 +171,13 @@ public class HtmlToPdfConverter extends HtmlConverter
 			if(matcher.start()<comment_close_index)
 			{continue;}
 
-			//HtmlConversionException.debug(" matcher.group(): "+matcher.group());//debug**
+			//log.debug(" matcher.group(): "+matcher.group());//debug**
 
 			if(matcher.group().startsWith("<!--") || matcher.group().contains("<!--"))
 			{
-			//	HtmlConversionException.debug(class_name+" comment matcher.group()="+matcher.group());//debug**
+			//	log.debug(class_name+" comment matcher.group()="+matcher.group());//debug**
 				comment_close_index = html_string.indexOf("-->",matcher.start())+3;
-			//	HtmlConversionException.debug(class_name+" comment start index="+matcher.start()+" comment close index="+comment_close_index);//debug**
+			//	log.debug(class_name+" comment start index="+matcher.start()+" comment close index="+comment_close_index);//debug**
 				continue;
 			}//if.
 
@@ -372,7 +371,7 @@ public class HtmlToPdfConverter extends HtmlConverter
 			else if(tag.equals("text"))
 			{
 				Font element_font = getElementFont(element);
-			//	HtmlConversionException.debug(" text element parent.tag: "+element.parent.parent.getTag());//debug**
+			//	log.debug(" text element parent.tag: "+element.parent.parent.getTag());//debug**
 				if(element.parent.parent.getTag().equals("a"))//'.parent.parent' because 'text' elements are wrapped in a 'temptext' element.
 				{
 					Anchor link = new Anchor(element.getText(), element_font);
@@ -444,14 +443,14 @@ public class HtmlToPdfConverter extends HtmlConverter
 		if(text_decoration.contains("underline"))
 		{font_style+=Font.UNDERLINE;}
 
-	//	HtmlConversionException.debug(" text_decoration: "+text_decoration+" color: "+element.getColor()+" style: "+font_style);//debug**
-	//	HtmlConversionException.debug(" font_size:"+element.getFontSize()+" font_family: "+font_family+" font_weight: "+font_weight+" text:"+element.getText());//debug**
+	//	log.debug(" text_decoration: "+text_decoration+" color: "+element.getColor()+" style: "+font_style);//debug**
+	//	log.debug(" font_size:"+element.getFontSize()+" font_family: "+font_family+" font_weight: "+font_weight+" text:"+element.getText());//debug**
 
 		BaseFont base_font = null;
 		if(this.custom_fonts.containsKey(font_family))
 		{
 			base_font = this.custom_fonts.get(font_family);
-	//		HtmlConversionException.debug(" using custom font '"+font_family+"'!");//debug**
+	//		log.debug(" using custom font '"+font_family+"'!");//debug**
 		}//if.
 
 		Font element_font = new Font(base_font, (float)element.getFontSize(), font_style, element.getColor());

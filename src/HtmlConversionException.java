@@ -6,7 +6,7 @@ This class provides a method of either:
 	b) Throwing a custom exception message
 */
 
-import java.util.logging.Logger;
+
 import java.io.StringWriter;
 import java.io.PrintWriter;
 

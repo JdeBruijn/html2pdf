@@ -1,5 +1,5 @@
 
-import java.util.logging.Logger;
+
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.LinkedList;
@@ -225,14 +225,15 @@ public class HtmlData
 
 	public void setParent(HtmlData parent)
 	{
+		HtmlConversionException.log_level=HtmlConversionException.DEBUG;
 		if(!this.is_opening)
 		{
 			System.out.println("Warning: "+class_name+".setParent(): Cannot set 'parent' on closing tag!");
 			return;
 		}//if.
 
-		HtmlConversionException.debug(class_name+".setParent(): this.tag="+this.tag);//debug**
-	//	HtmlConversionException.debug(class_name+".setParent(): parent="+parent);//debug**
+		log.debug(class_name+".setParent(): this.tag="+this.tag);//debug**
+	//	log.debug(class_name+".setParent(): parent="+parent);//debug**
 
 		this.parent=parent;
 		//copyParentStyleProperties();
@@ -241,8 +242,9 @@ public class HtmlData
 
 		if(this.getTag().equals("th") || this.getTag().equals("td"))
 		{extractColspan();}
-		HtmlConversionException.debug(class_name+".setParent(): matched_sequence: "+this.matched_sequence);//debug**
-		HtmlConversionException.debug(" "+this.printStyling());//debug**
+		log.debug(class_name+".setParent(): matched_sequence: "+this.matched_sequence);//debug**
+		log.debug(" "+this.printStyling());//debug**
+		HtmlConversionException.log_level=HtmlConversionException.INFO;
 	}//setParent().
 
 	public String getTag()
@@ -330,8 +332,8 @@ public class HtmlData
 			{default_color=Color.BLUE;}
 
 	//		System.out.println();//debug**
-	//		HtmlConversionException.debug(class_name+".extractStyleProperties(): matched_sequence: "+this.matched_sequence);//debug**
-	//		HtmlConversionException.debug(" style_fg_color: "+style_fg_color+" parent.fg_color: "+parent.fg_color+" default_color: "+default_color);//debug**
+	//		log.debug(class_name+".extractStyleProperties(): matched_sequence: "+this.matched_sequence);//debug**
+	//		log.debug(" style_fg_color: "+style_fg_color+" parent.fg_color: "+parent.fg_color+" default_color: "+default_color);//debug**
 			if(style_fg_color.trim().equals("inherit"))
 			{this.fg_color=parent.fg_color;}
 			else
@@ -343,7 +345,7 @@ public class HtmlData
 			ce.writeLog(log);
 			this.fg_color=parent.fg_color;
 		}//catch().
-	//	HtmlConversionException.debug(" final fg_colour: "+this.fg_color.toString());//debug**
+	//	log.debug(" final fg_colour: "+this.fg_color.toString());//debug**
 
 	//Background Color
 		try
@@ -482,21 +484,21 @@ public class HtmlData
 	private void extractFontData()
 	{
 	//	HtmlConversionException.log_level=HtmlConversionException.DEBUG;
-	//	HtmlConversionException.debug(class_name+".extractFontData(): matched_sequence: "+this.matched_sequence);//debug**
-	//	HtmlConversionException.debug(" tag: "+this.getTag());//debug**
+	//	log.debug(class_name+".extractFontData(): matched_sequence: "+this.matched_sequence);//debug**
+	//	log.debug(" tag: "+this.getTag());//debug**
 
 	//Font Size
 		String font_size_str="";
 		try
 		{
 			font_size_str = StaticStuff.findLastMatchWithDefaultValue(this.style_string, "font-size *: *[0-9.]+(em)?", String.valueOf(parent.font_size)).replaceAll("font-size *: *","");
-	//		HtmlConversionException.debug(" font_size_str: "+font_size_str);//debug**
+	//		log.debug(" font_size_str: "+font_size_str);//debug**
 			this.font_size=Double.parseDouble(font_size_str.replaceAll("[^0-9.]+",""));
 			if(font_size_str.matches("[0-9]+\\.?[0-9]*em"))
 			{
 				this.font_size = StaticStuff.roundTo(parent.font_size*this.font_size,2);//Use 'this.font_size' as a multiplier instead.
 			}//if.
-	//		HtmlConversionException.debug(" this.font_size: "+this.font_size);//debug**
+	//		log.debug(" this.font_size: "+this.font_size);//debug**
 		}//try.
 		catch(HtmlConversionException ce)
 		{
@@ -535,7 +537,7 @@ public class HtmlData
 			if(this.getTag().equals("a") && !this.text_decoration.contains("underline"))//italic
 			{this.text_decoration+=" underline";}
 		}//if.
-	//	HtmlConversionException.debug(" text_decoration: "+this.text_decoration);//debug**
+	//	log.debug(" text_decoration: "+this.text_decoration);//debug**
 
 
 	//Font Family.
@@ -548,8 +550,8 @@ public class HtmlData
 		}//catch().
 		if(this.font_family.trim().isEmpty())
 		{this.font_family=parent.font_family;}
-	//	HtmlConversionException.debug(" parent.font_family: "+this.parent.font_family);//debug**
-	//	HtmlConversionException.debug(" font_family: "+this.font_family);//debug**
+	//	log.debug(" parent.font_family: "+this.parent.font_family);//debug**
+	//	log.debug(" font_family: "+this.font_family);//debug**
 
 
 	//Font Weight.
@@ -616,7 +618,7 @@ public class HtmlData
 		try
 		{
 			this.white_space = StaticStuff.findLastMatchWithDefaultValue(this.style_string, "white-space *: *[^;\"]+", String.valueOf(parent.white_space)).replaceAll("white-space *: *","").trim();
-			//HtmlConversionException.debug(class_name+".extractTextProperties(): this.white_space: "+this.white_space);//debug**
+			//log.debug(class_name+".extractTextProperties(): this.white_space: "+this.white_space);//debug**
 			if(this.white_space.isEmpty())
 			{this.white_space=parent.white_space;}
 		}//try.
@@ -683,19 +685,19 @@ public class HtmlData
 
 	private void extractBorderData()
 	{
-	//	HtmlConversionException.debug("\nextractBorderData(): this.tag: "+this.getTag());
+	//	log.debug("\nextractBorderData(): this.tag: "+this.getTag());
 
 		String[] all_borders_data = extractBorderDataHelper("","0");//debug**
 
 		//Turns out border data is not normally automatically inherited.
 		String[] top_border_data = extractBorderDataHelper("-top", String.valueOf(parent.border_top_width));
-	//	HtmlConversionException.debug(" top_border_data: "+Arrays.toString(top_border_data));//debug**
+	//	log.debug(" top_border_data: "+Arrays.toString(top_border_data));//debug**
 		String[] right_border_data = extractBorderDataHelper("-right", String.valueOf(parent.border_right_width));
-	//	HtmlConversionException.debug(" right_border_data: "+Arrays.toString(right_border_data));//debug**
+	//	log.debug(" right_border_data: "+Arrays.toString(right_border_data));//debug**
 		String[] bottom_border_data = extractBorderDataHelper("-bottom", String.valueOf(parent.border_bottom_width));
-	//	HtmlConversionException.debug(" bottom_border_data: "+Arrays.toString(bottom_border_data));//debug**
+	//	log.debug(" bottom_border_data: "+Arrays.toString(bottom_border_data));//debug**
 		String[] left_border_data = extractBorderDataHelper("-left", String.valueOf(parent.border_left_width));
-	//	HtmlConversionException.debug(" left_border_data: "+Arrays.toString(left_border_data));//debug**
+	//	log.debug(" left_border_data: "+Arrays.toString(left_border_data));//debug**
 
 		if(!all_borders_data[0].equals("0"))//'0' means no value was found when looking for 'border:'. 'none' means 'border:' was explicitly set to 'none' or '0'.
 		{
@@ -773,7 +775,7 @@ public class HtmlData
 
 	private String[] getTableDefaultBorders(String side)
 	{
-	//	HtmlConversionException.debug(" getTableDefaultBorders(): side: "+side);
+	//	log.debug(" getTableDefaultBorders(): side: "+side);
 		if(this.getTag().equals("table") && (side.endsWith("top") || side.endsWith("left")))
 		{return new String[] {"1", "solid", "black"};}
 

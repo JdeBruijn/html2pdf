@@ -35,7 +35,7 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.HashMap;
-import java.util.logging.Logger;
+
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.Arrays;
@@ -45,7 +45,7 @@ public class CssInliner
 	private static final String class_name = "CssInliner";
 	private static final Logger log = Logger.getLogger(class_name);
 
-	private static final String default_styling_file = "./defaults.css";
+	private static final String default_styling_file = "./elements_defaults.css";
 
 	private HashMap<String, CssObject> css_tags = new HashMap<String, CssObject>();
 	private HashMap<String, CssObject> css_classes = new HashMap<String, CssObject>();
@@ -56,16 +56,16 @@ public class CssInliner
 
 	public CssInliner(String css_filename)
 	{
-		HtmlConversionException.writeLog(HtmlConversionException.DEBUG, null, class_name+".constructor():");//debug**
+		log.debug( class_name+".constructor():");//debug**
 
 		if(default_styling_file!=null)
 		{readCss(default_styling_file);}
 		if(css_filename!=null && !css_filename.trim().isEmpty())
 		{readCss(css_filename);}
 
-		HtmlConversionException.writeLog(HtmlConversionException.DEBUG, null, "css_tags:\n"+StaticStuff.printHashMap(this.css_tags));//debug**
-		HtmlConversionException.writeLog(HtmlConversionException.DEBUG, null, "css_classes:\n"+StaticStuff.printHashMap(this.css_classes));//debug**
-		HtmlConversionException.writeLog(HtmlConversionException.DEBUG, null, "css_ids:\n"+StaticStuff.printHashMap(this.css_ids));//debug**
+		log.debug( "css_tags:\n"+StaticStuff.printHashMap(this.css_tags));//debug**
+		log.debug( "css_classes:\n"+StaticStuff.printHashMap(this.css_classes));//debug**
+		log.debug( "css_ids:\n"+StaticStuff.printHashMap(this.css_ids));//debug**
 	}//constructor().
 
 	private void readCss(String css_filename)
@@ -82,7 +82,7 @@ public class CssInliner
 
 	private void processCss(String css_string)
 	{
-	//	HtmlConversionException.writeLog(HtmlConversionException.DEBUG, null, class_name+".processCss():");//debug**
+	//	log.debug( class_name+".processCss():");//debug**
 
 		//Remove all comments.
 		css_string = Pattern.compile("/\\*.*\\*/", Pattern.DOTALL).matcher(css_string).replaceAll("");
@@ -110,8 +110,8 @@ public class CssInliner
 				log.warning(class_name+".processCss(): body is blank? matched sequence: '"+matcher.group()+"'");
 				return;
 			}//if.
-		//	HtmlConversionException.writeLog(HtmlConversionException.DEBUG, null, " name:"+name);//debug**
-		//	HtmlConversionException.writeLog(HtmlConversionException.DEBUG, null, " css_parameters:"+Arrays.toString(css_parameters));//debug**
+		//	log.debug( " name:"+name);//debug**
+		//	log.debug( " css_parameters:"+Arrays.toString(css_parameters));//debug**
 
 			for(String param_data: css_parameters)
 			{
@@ -137,7 +137,7 @@ public class CssInliner
 
 	public String inline(String html)
 	{
-		HtmlConversionException.writeLog(HtmlConversionException.DEBUG, null, class_name+".inline():");//debug**
+		log.debug( class_name+".inline():");//debug**
 		StringBuilder css_html = new StringBuilder();
 
 		html = html.replaceAll("\n", "");
@@ -160,7 +160,7 @@ public class CssInliner
 
 			if (line.equals("</body"))
 			{finished = true;}
-			HtmlConversionException.writeLog(HtmlConversionException.DEBUG, null, " line="+line);//debug**
+			log.debug( " line="+line);//debug**
 			if (finished || line.charAt(1) == '/')
 			{
 				css_html.append(line + ">\n");
@@ -182,7 +182,7 @@ public class CssInliner
 			}//if.
 
 			
-			HtmlConversionException.writeLog(HtmlConversionException.DEBUG, null, " original line="+line);//debug**
+			log.debug( " original line="+line);//debug**
 			String tag="";
 			try
 			{tag = StaticStuff.findFirstMatch(line, "<[^ ]+").replace("<","");}
@@ -213,7 +213,7 @@ public class CssInliner
 				ce.writeLog(null);
 			}//catch().
 
-			HtmlConversionException.writeLog(HtmlConversionException.DEBUG, null, "tag: "+tag+" id: "+id+" classes: "+classes);//debug**
+			log.debug( "tag: "+tag+" id: "+id+" classes: "+classes);//debug**
 
 			inline_styling=null;
 			style_indexes = null;
@@ -231,7 +231,7 @@ public class CssInliner
 
 			String all_styling = getCssStyles(tag, id, classes);
 
-			HtmlConversionException.writeLog(HtmlConversionException.DEBUG, null, " all_styling: "+all_styling);//debug**
+			log.debug( " all_styling: "+all_styling);//debug**
 
 			if(style_indexes!=null)
 			{line_new.append(line.substring(0, style_indexes[0]));}
@@ -248,7 +248,7 @@ public class CssInliner
 			css_html.append(line_new);
 
 		}//for(line).
-		//HtmlConversionException.writeLog(HtmlConversionException.DEBUG, null, class_name+".inline() css_html="+css_html.toString());//debug**
+		//log.debug( class_name+".inline() css_html="+css_html.toString());//debug**
 		return css_html.toString();
 	}//inline().
 

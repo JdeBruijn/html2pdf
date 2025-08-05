@@ -1,5 +1,5 @@
 
-import java.util.logging.Logger;
+
 import java.util.List;
 import java.util.LinkedList;
 
@@ -20,6 +20,8 @@ public class Main
 
 	public static void main(String[] args)
 	{
+		HtmlConversionException.log_level=HtmlConversionException.INFO;
+		
 		if(args.length<=1 || args[1]==null || args[1].trim().length()<=0)
 		{
 			System.out.println("SEVERE: "+"Please specify an Output Format (eg: pdf, png, jpg) and a HTML input file. Usage:\n\tjava HtmlToImageConverter 'output_format(pdf,png,jpg)' 'path/to/file.html' ['path/to/css.file']");
@@ -41,13 +43,13 @@ public class Main
 		List<String[]> font_files = getFontConfigs(base_path+"fonts.json");
 
 	//SETUP CONVERTER
-		HtmlConversionException.log_level=HtmlConversionException.DEBUG;
+	//	HtmlConversionException.log_level=HtmlConversionException.DEBUG;
 		HtmlConverter converter=null;
 		if(output_format.equals("pdf"))
 		{converter = new HtmlToPdfConverter(base_path, css_path, font_files, null, global_page_width, global_page_height);}
 		else
 		{converter = new HtmlToImageConverter(base_path, css_path, font_files, null, global_page_width, global_page_height);}
-		HtmlConversionException.log_level=HtmlConversionException.INFO;
+	//	HtmlConversionException.log_level=HtmlConversionException.INFO;
 
 	//CONVERT HTML AND WRITE TO OUTPUT
 		try

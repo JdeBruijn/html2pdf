@@ -1,5 +1,5 @@
 
-import java.util.logging.Logger;
+
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.List;
@@ -51,7 +51,7 @@ public class HtmlToImageConverter extends HtmlConverter
 	public HtmlToImageConverter(String base_path, String css_path, List<String[]> font_files, Double space_m_sizing, double output_width, double output_height)
 	{
 		setBasePath(base_path);//Used for finding location of things like images.
-		HtmlConversionException.debug(class_name+".main(): base_path: "+this.doc_vars.base_path);//debug**
+		log.debug(class_name+".main(): base_path: "+this.doc_vars.base_path);//debug**
 
 		if(css_path!=null && !css_path.trim().isEmpty())
 		{css_path = normalizePath(css_path);}
@@ -86,11 +86,11 @@ public class HtmlToImageConverter extends HtmlConverter
 	protected void createFont(String font_name, String font_file_name)
 	{
 		font_file_name = normalizePath(font_file_name);
-		HtmlConversionException.debug(class_name+".createFont(): ");//debug**
+		log.debug(class_name+".createFont(): ");//debug**
 		try
 		{
 			File font_file = new File(font_file_name);
-			HtmlConversionException.debug(" creating font '"+font_name+"' from '"+font_file_name+"'...");//debug**
+			log.debug(" creating font '"+font_name+"' from '"+font_file_name+"'...");//debug**
 			Font font = Font.createFont(Font.TRUETYPE_FONT, font_file);
 			this.custom_fonts.put(font_name, font);
 		}//try.
@@ -136,7 +136,7 @@ public class HtmlToImageConverter extends HtmlConverter
 
 	protected PDFElementProperties readHTML(String html_string) throws HtmlConversionException
 	{
-		HtmlConversionException.debug(class_name+".readHTML(): ");//debug**
+		log.debug(class_name+".readHTML(): ");//debug**
 
 		//Remove <head> since it's not relevant.
 		html_string = Pattern.compile("<head>.*</head>", Pattern.DOTALL).matcher(html_string).replaceAll("");
@@ -157,13 +157,13 @@ public class HtmlToImageConverter extends HtmlConverter
 			if(matcher.start()<comment_close_index)
 			{continue;}
 
-			//HtmlConversionException.debug(" matcher.group(): "+matcher.group());//debug**
+			//log.debug(" matcher.group(): "+matcher.group());//debug**
 
 			if(matcher.group().startsWith("<!--") || matcher.group().contains("<!--"))
 			{
-			//	HtmlConversionException.debug(class_name+" comment matcher.group()="+matcher.group());//debug**
+			//	log.debug(class_name+" comment matcher.group()="+matcher.group());//debug**
 				comment_close_index = html_string.indexOf("-->",matcher.start())+3;
-			//	HtmlConversionException.debug(class_name+" comment start index="+matcher.start()+" comment close index="+comment_close_index);//debug**
+			//	log.debug(class_name+" comment start index="+matcher.start()+" comment close index="+comment_close_index);//debug**
 				continue;
 			}//if.
 
@@ -241,7 +241,7 @@ public class HtmlToImageConverter extends HtmlConverter
 
 	protected void lookForUnenclosedText(String html_string, int start_index, int end_index, PDFElementProperties parent_element) throws HtmlConversionException
 	{
-		HtmlConversionException.debug(" lookForUnenclosedText():");//debug**
+		log.debug(" lookForUnenclosedText():");//debug**
 		String contained_text = html_string.substring(start_index, end_index);
 		if(contained_text.trim().isEmpty())
 		{return;}
@@ -275,7 +275,7 @@ public class HtmlToImageConverter extends HtmlConverter
 			total_words_width+=width;//debug**
 		}//for(word).
 
-		HtmlConversionException.debug(" total_words_width: "+total_words_width);//debug**
+		log.debug(" total_words_width: "+total_words_width);//debug**
 
 		try
 		{parent_element.setText(text_words);}
@@ -330,7 +330,7 @@ public class HtmlToImageConverter extends HtmlConverter
 				graphics.setColor(element.getColor());
 				Font element_font = getElementFont(element);
 				graphics.setFont(element_font);
-				HtmlConversionException.debug(" text element parent.tag: "+element.parent.parent.getTag());//debug**
+				log.debug(" text element parent.tag: "+element.parent.parent.getTag());//debug**
 				int x_offset=0;
 				if(element.getText().startsWith("&bull;"))//List items
 				{
@@ -422,7 +422,7 @@ public class HtmlToImageConverter extends HtmlConverter
 
 	protected Font getElementFont(PDFElementProperties element)
 	{
-		HtmlConversionException.debug("getElementFont():");//debug**
+		log.debug("getElementFont():");//debug**
 
 		String font_family = element.getFontFamily();
 		String lower_case_family = font_family.toLowerCase();
@@ -440,19 +440,19 @@ public class HtmlToImageConverter extends HtmlConverter
 			italic=false;//Might need to change this.
 		}//if.
 
-	//	HtmlConversionException.debug(" text_decoration: "+text_decoration+" color: "+element.getColor()+" style: "+font_style);//debug**
-		HtmlConversionException.debug(" font_size:"+element.getFontSize()+" font_family: "+font_family+" font_weight: "+font_weight+" text:"+element.getText());//debug**
+	//	log.debug(" text_decoration: "+text_decoration+" color: "+element.getColor()+" style: "+font_style);//debug**
+		log.debug(" font_size:"+element.getFontSize()+" font_family: "+font_family+" font_weight: "+font_weight+" text:"+element.getText());//debug**
 
 		Font base_font = null;
 		if(this.custom_fonts.containsKey(font_family))
 		{
 			base_font = this.custom_fonts.get(font_family);
-			HtmlConversionException.debug(" using custom font '"+font_family+"'!");//debug**
+			log.debug(" using custom font '"+font_family+"'!");//debug**
 		}//if.
 		else
 		{
 			base_font = new Font("Dialog", Font.PLAIN, (int)element.getFontSize());//default font.
-			HtmlConversionException.debug(" using default font!");//debug**
+			log.debug(" using default font!");//debug**
 		}//else
 
 		Map<TextAttribute, Object> attributes = new java.util.HashMap<>(base_font.getAttributes());

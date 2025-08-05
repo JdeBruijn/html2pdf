@@ -130,25 +130,32 @@ table
 	display:block;
 	border-collapse: collapse;
 	border-spacing: 0;
+	border-top: 1px solid black;
+	border-left: 1px solid black;
+}
+
+tr
+{
+	border-right: 1px solid black;
 }
 
 th
 {
 	padding: 0.5em;
-	border: 1px solid #ccc;
+	border-right: 1px solid black;
 	text-align: left;
 }
 td
 {
   padding: 0.5em;
-  border: 1px solid #ccc;
+  border-right: 1px solid black;
   text-align: left;
 }
 
 hr
 {
 	border: none;
-	border-top: 1px solid #ccc;
+	border-right: 1px solid black;
 	margin: 1em 0;
 }
 

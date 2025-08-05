@@ -7,7 +7,7 @@ Collection of useful generic methods to be imported into any project.
 import java.util.Calendar;
 import java.util.Date;
 import java.util.TimeZone;
-import java.util.logging.Logger;
+
 import java.util.HashMap;
 import java.util.Set;
 import java.util.ArrayList;
