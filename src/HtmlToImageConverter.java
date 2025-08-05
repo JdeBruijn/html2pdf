@@ -295,7 +295,7 @@ public class HtmlToImageConverter extends HtmlConverter
 		int page_width = (int)this.doc_vars.getPageWidth();
 		int page_height = (int)this.doc_vars.getPageHeight();
 
-		HtmlConversionException.writeLog(HtmlConversionException.INFO, null, class_name+".generateImage(): page_width:"+page_width+" page_height:"+page_height);//INFO
+		log.info( class_name+".generateImage(): page_width:"+page_width+" page_height:"+page_height);//INFO
 
 		//Create a blank image
 		BufferedImage output_image = new BufferedImage(page_width, page_height, BufferedImage.TYPE_INT_ARGB);

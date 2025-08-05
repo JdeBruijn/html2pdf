@@ -315,7 +315,7 @@ public class HtmlToPdfConverter extends HtmlConverter
 		float page_width = (float)this.doc_vars.getPageWidth();
 		float page_height = (float)this.doc_vars.getPageHeight();
 
-		HtmlConversionException.writeLog(HtmlConversionException.INFO, null, class_name+".generatePdf(): page_width:"+page_width+" page_height:"+page_height);//INFO
+		log.info( class_name+".generatePdf(): page_width:"+page_width+" page_height:"+page_height);//INFO
 		//Font font1 = FontFactory.getFont("Helvetica", 8, Font.BOLD, Color.BLACK);
 		//Rectangle page_rectangle = PageSize.A4;
 		Rectangle page_rectangle = new RectangleReadOnly(page_width, page_height);
