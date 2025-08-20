@@ -121,7 +121,6 @@ public class HtmlToPdfConverter extends HtmlConverter
 		html_string = css_inliner.inline(html_string);		
 
 //READ HTML
-		this.flattened_elements = new LinkedList<PDFElementProperties>();
 		try
 		{
 			PDFElementProperties top_element=readHTML(html_string);
@@ -259,6 +258,8 @@ public class HtmlToPdfConverter extends HtmlConverter
 		String contained_text = html_string.substring(start_index, end_index);
 		if(contained_text.trim().isEmpty())
 		{return;}
+
+		contained_text = StaticStuff.reverseEscapeXML(contained_text);
 
 		String font_family = parent_element.html_data.font_family;
 		double font_size = parent_element.html_data.font_size;

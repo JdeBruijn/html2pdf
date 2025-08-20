@@ -108,7 +108,6 @@ public class HtmlToImageConverter extends HtmlConverter
 		html_string = this.css_inliner.inline(html_string);		
 
 //READ HTML
-		this.flattened_elements = new LinkedList<PDFElementProperties>();
 		try
 		{
 			PDFElementProperties top_element=readHTML(html_string);

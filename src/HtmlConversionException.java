@@ -94,7 +94,7 @@ public class HtmlConversionException extends Exception
 	}//debug().
 
 	public static void writeLog(int severity, Logger logger, String log_string)
-	{
+	{		
 		if(severity>log_level)
 		{return;}
 

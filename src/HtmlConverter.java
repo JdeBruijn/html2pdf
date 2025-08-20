@@ -44,6 +44,8 @@ public abstract class HtmlConverter
 
 	protected void flattenElements(PDFElementProperties base_element)
 	{
+		if(this.flattened_elements==null)
+		{this.flattened_elements = new LinkedList<PDFElementProperties>();}
 		this.flattened_elements.add(base_element);
 		for(PDFElementProperties child: base_element.children)
 		{

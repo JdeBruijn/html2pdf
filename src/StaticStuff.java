@@ -449,5 +449,44 @@ public class StaticStuff
 	{return findLastMatchWithDefaultValue(source, regex, default_value, null);}
 
 
+	public static String escapeXML(String xml)
+	{
+		if(xml==null || xml.length()<=0)
+		{return xml;}
+		
+		if(xml.contains("src") || xml.contains("script") || xml.contains("href"))
+		{
+			log.warning(class_name+" Found possible XSS attempt! Script -> "+xml);
+		}//if.
+		
+		String result = xml.replaceAll("<", "&lt;");
+		result = result.replaceAll(">", "&gt;");
+		result = result.replaceAll("\"", "&quot;");
+		result = result.replaceAll("\'", "&apos;");
+		result = result.replaceAll("\\\\", "&bsol");
+        
+		return result;
+	}//escapeXML().
+	
+//Reverses the effects of the above method.	
+	public static String reverseEscapeXML(String xml)
+	{
+		if(xml==null || xml.length()<=0)
+		{return xml;}
+		
+		if(xml.contains("src") || xml.contains("script") || xml.contains("href"))
+		{
+			log.warning(class_name+" Found possible XSS attempt! Script -> "+xml);
+		}//if.
+		
+		String result = xml.replaceAll("&lt;", "<");
+		result = result.replaceAll("&gt;", ">");
+		result = result.replaceAll("&quot;", "\"");
+		result = result.replaceAll("&apos;", "'");
+		result = result.replaceAll("&bsol", "\\");
+        
+		return result;
+	}//reverseEscapeXML().
+
 
 }//class StaticStuff.

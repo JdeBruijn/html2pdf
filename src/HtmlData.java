@@ -225,15 +225,12 @@ public class HtmlData
 
 	public void setParent(HtmlData parent)
 	{
-		HtmlConversionException.log_level=HtmlConversionException.DEBUG;
+	//	Logger.setLogLevel(Logger.DEBUG);
 		if(!this.is_opening)
 		{
 			System.out.println("Warning: "+class_name+".setParent(): Cannot set 'parent' on closing tag!");
 			return;
 		}//if.
-
-		log.debug(class_name+".setParent(): this.tag="+this.tag);//debug**
-	//	log.debug(class_name+".setParent(): parent="+parent);//debug**
 
 		this.parent=parent;
 		//copyParentStyleProperties();
@@ -242,9 +239,15 @@ public class HtmlData
 
 		if(this.getTag().equals("th") || this.getTag().equals("td"))
 		{extractColspan();}
-		log.debug(class_name+".setParent(): matched_sequence: "+this.matched_sequence);//debug**
-		log.debug(" "+this.printStyling());//debug**
-		HtmlConversionException.log_level=HtmlConversionException.INFO;
+
+	//	if(!this.tag.contains("text"))
+	//	{
+			log.debug(class_name+".setParent(): this.tag="+this.tag);//debug**
+		//	log.debug(class_name+".setParent(): parent="+parent);//debug**
+			log.debug(class_name+".setParent(): matched_sequence: "+this.matched_sequence);//debug**
+			log.debug(" "+this.printStyling());//debug**
+	//	}//if.
+	//	Logger.setLogLevel(Logger.INFO);
 	}//setParent().
 
 	public String getTag()
